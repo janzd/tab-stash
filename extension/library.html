@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>TabStash — Your visual tab library</title>
+  <link rel="icon" href="icons/32.png">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="library.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="library.html" aria-label="TabStash home"><span class="brand-mark" aria-hidden="true">▱</span>TabStash<span class="brand-dot">.</span></a>
+    <div class="workspace-label">YOUR SPACE</div>
+    <button id="all-decks" class="nav-item active"><span aria-hidden="true">▦</span> All decks <span id="deck-count" class="count">0</span></button>
+    <div class="sidebar-note"><span class="little-stack" aria-hidden="true">▱<br>▱<br>▱</span><h3>A place to pick up<br>where you left off.</h3><p>Your tabs, tucked away.<br>Your head, a little clearer.</p></div>
+    <div class="sidebar-bottom">
+      <button id="import" class="quiet-button"><span aria-hidden="true">↥</span> Import backup</button>
+      <button id="export-all" class="quiet-button"><span aria-hidden="true">↧</span> Export library</button>
+      <div class="local-note"><span class="status-dot"></span> On this device. Just for you.</div>
+      <span class="version">TABSTASH / 0.1</span>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div class="breadcrumb">Your space <span>/</span> <strong id="crumb">All decks</strong></div>
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Find a deck, title, or URL…" aria-label="Search decks and tabs"><kbd>/</kbd></label>
+    </header>
+    <section id="capture-progress" class="capture-progress" hidden aria-live="polite">
+      <div class="progress-copy"><strong id="progress-title">Saving your tabs…</strong><span id="progress-detail"></span></div>
+      <progress id="progress-bar" max="1" value="0"></progress><button id="cancel-capture" class="text-button">Stop capture</button>
+    </section>
+    <section id="library-view" class="content">
+      <div class="page-heading"><div><div class="eyebrow">LESS CLUTTER. MORE CONTEXT.</div><h1>Make room for later<span>.</span></h1><p>Save the tabs. Keep the big picture.</p></div><button id="new-deck" class="primary"><span aria-hidden="true">＋</span> Stash open tabs</button></div>
+      <div class="section-heading"><h2>Your decks <span id="deck-total">0</span></h2><select id="sort" aria-label="Sort decks"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></div>
+      <div id="deck-grid" class="deck-grid"></div>
+      <div id="empty" class="empty-state">
+        <div class="empty-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-middle"></div><div class="paper paper-front"><div class="paper-dots">● ● ●</div><div class="paper-landscape"><span></span></div><div class="paper-line"></div><div class="paper-line short"></div></div><span class="art-spark">✳</span></div>
+        <div class="eyebrow">A FRESH LITTLE START</div><h2>Your next idea deserves a deck.</h2><p>Turn a window full of tabs into a visual snapshot.<br>Come back to it whenever you’re ready.</p><button id="empty-stash" class="primary">Create your first deck <span aria-hidden="true">↗</span></button>
+        <div class="empty-footnote">Screenshots + titles + links. All saved together.</div>
+      </div>
+      <div id="no-results" class="no-results" hidden><h2>No decks found.</h2><p>Try a different title, website, or keyword.</p><button id="clear-search" class="secondary">Clear search</button></div>
+      <footer class="library-footer"><span id="library-stats">A little space for everything you’re exploring.</span><span>Close the loop. Keep the possibilities.</span></footer>
+    </section>
+    <section id="detail-view" class="content" hidden>
+      <button id="back" class="back-button">← All decks</button>
+      <div class="detail-heading"><div><div id="detail-date" class="eyebrow"></div><h1 id="detail-title"></h1><p id="detail-meta"></p></div><div class="detail-actions"><button id="rename-deck" class="secondary">Rename</button><button id="restore-deck" class="primary">Restore deck <span aria-hidden="true">↗</span></button></div></div>
+      <div class="detail-toolbar"><p>One moment, all your tabs.</p><div><button id="export-deck" class="text-button">Export deck</button><button id="delete-deck" class="text-button danger">Delete deck</button></div></div>
+      <div id="tab-grid" class="tab-grid"></div>
+    </section>
+  </main>
+  <dialog id="save-dialog">
+    <form id="save-form"><div class="dialog-heading"><span class="eyebrow">SAVE A LITTLE HEADSPACE</span><button type="button" class="close-dialog icon-button" aria-label="Close">×</button></div><h2>A new home for your tabs.</h2><p>Keep a visual snapshot of what you’re exploring.</p>
+      <label class="field-label" for="deck-name">Deck name</label><input id="deck-name" class="text-field" maxlength="120" placeholder="e.g. A weekend in Kyoto" autocomplete="off">
+      <label class="field-label" for="capture-scope">Tabs to save</label><select id="capture-scope" class="text-field"><option value="current">This window</option><option value="all">All normal windows</option></select>
+      <div class="capture-explanation"><span aria-hidden="true">◉</span><p>Chrome will briefly visit each tab to take its screenshot, then bring you back. Let it finish before switching tabs. Sleeping and restricted tabs are saved as links.</p></div>
+      <p class="permission-note">Chrome asks for website access the first time. Screenshots stay on this device.</p><div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancel</button><button id="save-submit" class="primary" type="submit">Stash tabs <span aria-hidden="true">↗</span></button></div>
+    </form>
+  </dialog>
+  <dialog id="edit-dialog"><form id="edit-form"><div class="dialog-heading"><span class="eyebrow">MAKE IT YOURS</span><button type="button" class="close-dialog icon-button" aria-label="Close">×</button></div><h2>Rename deck</h2><label class="field-label" for="rename-input">Deck name</label><input id="rename-input" class="text-field" maxlength="120" required><div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancel</button><button class="primary" type="submit">Save name</button></div></form></dialog>
+  <dialog id="delete-dialog"><form id="delete-form"><div class="dialog-heading"><span class="eyebrow">A LITTLE TIDY-UP</span><button type="button" class="close-dialog icon-button" aria-label="Close">×</button></div><h2>Delete this deck?</h2><p id="delete-description"></p><p>This removes the saved screenshots and links. Your open tabs stay open.</p><div class="dialog-actions"><button type="button" class="secondary close-dialog">Keep deck</button><button class="danger-button" type="submit">Delete deck</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <input id="import-file" type="file" accept=".json,application/json" hidden>
+</body>
+</html>

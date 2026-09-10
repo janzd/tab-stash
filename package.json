@@ -1,0 +1,13 @@
+{
+  "name": "tabstash",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Save your Chrome tabs as visual decks.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.mjs",
+    "test:e2e": "node tests/browser.mjs"
+  },
+  "devDependencies": { "@playwright/test": "1.58.2" }
+}

@@ -23,7 +23,7 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 - Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.
 - Stops capture while retaining all saved links and completed previews.
 - Recovers interrupted sessions on the next library visit.
-- Offers **Light**, **Dark**, and **System** themes through the selector beside search. System is the default and follows device appearance changes live. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
+- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
 
 ## How screenshots work
 

@@ -8,7 +8,8 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 
 function setup({ cached, saved, dark = false, read, write, cacheBlocked = false } = {}) {
   const root = { dataset: {}, style: {} };
-  const select = { value: '', disabled: false, addEventListener: (_, fn) => { select.change = fn; } };
+  const control = { disabled: false, addEventListener: (_, fn) => { control.change = fn; } };
+  const inputs = ['light', 'dark', 'system'].map(value => ({ value, checked: false }));
   const error = {};
   const system = { matches: dark, addEventListener: (_, fn) => { system.change = fn; } };
   const values = new Map([['tabstash.themePreference', cached]]);
@@ -18,7 +19,8 @@ function setup({ cached, saved, dark = false, read, write, cacheBlocked = false 
   runInNewContext(script, {
     document: {
       documentElement: root,
-      querySelector: selector => selector === '#theme-select' ? select : error,
+      querySelector: selector => selector === '#theme-control' ? control : error,
+      querySelectorAll: () => inputs,
       addEventListener: (_, fn) => { ready = fn; }
     },
     matchMedia: () => system,
@@ -36,8 +38,9 @@ function setup({ cached, saved, dark = false, read, write, cacheBlocked = false 
   });
   ready();
   return {
-    root, select, error, writes, values,
-    choose: value => { select.value = value; return select.change({ target: select }); },
+    root, control, error, writes, values,
+    selected: () => inputs.find(input => input.checked)?.value,
+    choose: value => control.change({ target: inputs.find(input => input.value === value), currentTarget: control }),
     system: dark => { system.matches = dark; system.change(); },
     changed: (value, area = 'local') => changed({ themePreference: { newValue: value } }, area)
   };
@@ -47,7 +50,7 @@ test('System follows the device immediately and invalid stored preferences use S
   const page = setup({ dark: true, saved: 'invalid' });
   assert.equal(page.root.dataset.theme, 'dark');
   await settle();
-  assert.equal(page.select.value, 'system');
+  assert.equal(page.selected(), 'system');
   page.system(false);
   assert.equal(page.root.dataset.theme, 'light');
 });
@@ -78,19 +81,19 @@ test('a late initial read cannot overwrite a newer user choice', async () => {
   await page.choose('dark');
   resolveRead({ themePreference: 'light' });
   await settle();
-  assert.equal(page.select.value, 'dark');
+  assert.equal(page.selected(), 'dark');
 });
 
 test('local storage notifications update open pages; removal returns to System', async () => {
   const page = setup({ dark: true });
   await settle();
   page.changed('light', 'session');
-  assert.equal(page.select.value, 'system');
+  assert.equal(page.selected(), 'system');
   page.changed('light');
   assert.equal(page.root.dataset.theme, 'light');
   page.changed(undefined);
   assert.equal(page.root.dataset.theme, 'dark');
-  assert.equal(page.select.value, 'system');
+  assert.equal(page.selected(), 'system');
 });
 
 test('a failed save restores the previous selection and exposes a recoverable error', async () => {
@@ -98,8 +101,8 @@ test('a failed save restores the previous selection and exposes a recoverable er
   await settle();
   await page.choose('dark');
   assert.equal(page.root.dataset.theme, 'light');
-  assert.equal(page.select.value, 'light');
-  assert.equal(page.select.disabled, false);
+  assert.equal(page.selected(), 'light');
+  assert.equal(page.control.disabled, false);
   assert.equal(page.error.hidden, false);
   assert.match(page.error.textContent, /could not be saved/);
 });

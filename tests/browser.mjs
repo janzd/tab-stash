@@ -279,16 +279,16 @@ try {
   await library.evaluate(async ({ ids, extra }) => { await chrome.tabs.remove(ids); await chrome.windows.remove(extra); }, { ids: multiRestored.map(t => t.id), extra });
   console.log('PASS: multi-window capture/restore, pinned tabs, restricted-page fallback, concurrent capture rejection');
   assert.deepEqual(pageErrors, [], 'No uncaught UI errors');
-  await library.locator('#theme-select').selectOption('dark');
-  await library.waitForFunction(() => !document.querySelector('#theme-select').disabled);
+  await library.locator('label[for=theme-dark]').click();
+  await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
   await context.close();
   context = await chromium.launchPersistentContext(path.join(temp, 'profile'), launchOptions);
   const restarted = await context.newPage();
   await restarted.emulateMedia({ colorScheme: 'light' });
   await restarted.goto(`chrome-extension://${id}/library.html`);
-  await restarted.locator('#theme-select').waitFor();
+  await restarted.locator('#theme-control').waitFor();
   assert.equal(await restarted.getAttribute('html', 'data-theme'), 'dark');
-  assert.equal(await restarted.locator('#theme-select').inputValue(), 'dark');
+  assert.equal(await restarted.locator('#theme-control input:checked').inputValue(), 'dark');
   console.log('PASS: theme preference persists across a full browser restart');
   console.log('All browser integration checks passed.');
 } finally {

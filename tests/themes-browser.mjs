@@ -4,10 +4,28 @@ import path from 'node:path';
 export async function themePreferences({ context, library, results }) {
   const theme = () => library.getAttribute('html', 'data-theme');
   const choose = async value => {
-    await library.locator('#theme-select').selectOption(value);
-    await library.waitForFunction(value => document.querySelector('#theme-select').disabled === false && document.documentElement.dataset.themePreference === value, value);
+    await library.locator(`label[for=theme-${value}]`).click();
+    await library.waitForFunction(value => document.querySelector('#theme-control').disabled === false && document.documentElement.dataset.themePreference === value, value);
   };
-  assert.equal(await library.locator('#theme-select').inputValue(), 'system');
+  assert.equal(await library.locator('#theme-control input:checked').inputValue(), 'system');
+  assert.equal(await library.locator('.topbar #theme-control').count(), 0);
+  assert.equal(await library.locator('#theme-control label svg').count(), 3);
+  assert.equal(await library.locator('#theme-control').evaluate(control => control.closest('.sidebar') !== null && control.nextElementSibling.classList.contains('local-note')), true);
+  const controlBox = await library.locator('#theme-control').boundingBox();
+  const noteBox = await library.locator('.local-note').boundingBox();
+  assert.ok(controlBox.y + controlBox.height <= noteBox.y, 'Slider sits just above the local-storage note');
+  await library.locator('#theme-system').focus();
+  await library.keyboard.press('ArrowLeft');
+  await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+  assert.equal(await library.locator('#theme-dark').isChecked(), true);
+  assert.equal(await library.locator('#theme-dark').evaluate(input => input === document.activeElement), true);
+  await library.keyboard.press('ArrowLeft');
+  await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+  assert.equal(await library.locator('#theme-light').isChecked(), true);
+  await library.keyboard.press('ArrowRight');
+  await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+  assert.equal(await library.locator('#theme-dark').isChecked(), true);
+  await choose('system');
   await library.emulateMedia({ colorScheme: 'dark' });
   await library.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
   await library.screenshot({ path: path.join(results, 'theme-empty-dark.png'), fullPage: true });
@@ -16,9 +34,9 @@ export async function themePreferences({ context, library, results }) {
   await choose('dark');
   assert.equal(await theme(), 'dark');
   await library.reload();
-  await library.locator('#theme-select').waitFor();
+  await library.locator('#theme-control').waitFor();
   assert.equal(await theme(), 'dark');
-  assert.equal(await library.locator('#theme-select').inputValue(), 'dark');
+  assert.equal(await library.locator('#theme-control input:checked').inputValue(), 'dark');
 
   const other = await context.newPage();
   await other.emulateMedia({ colorScheme: 'light' });
@@ -26,7 +44,7 @@ export async function themePreferences({ context, library, results }) {
   assert.equal(await other.getAttribute('html', 'data-theme'), 'dark');
   await choose('light');
   await other.waitForFunction(() => document.documentElement.dataset.themePreference === 'light');
-  assert.equal(await other.locator('#theme-select').inputValue(), 'light');
+  assert.equal(await other.locator('#theme-control input:checked').inputValue(), 'light');
   await library.emulateMedia({ colorScheme: 'dark' });
   assert.equal(await theme(), 'light');
   await choose('system');
@@ -44,7 +62,7 @@ export async function themePreferences({ context, library, results }) {
   assert.equal(await theme(), 'dark');
   await library.evaluate(() => chrome.storage.local.remove('themePreference'));
   await library.waitForFunction(() => document.documentElement.dataset.themePreference === 'system');
-  assert.equal(await library.locator('#theme-select').inputValue(), 'system');
+  assert.equal(await library.locator('#theme-control input:checked').inputValue(), 'system');
   await other.close();
   await library.emulateMedia({ colorScheme: 'light' });
   await choose('system');
@@ -57,8 +75,8 @@ export async function themeAppearance({ library, results }) {
   const pictures = await library.locator('.tab-image img').evaluateAll(images => images.map(img => img.src));
   const backdrops = [];
   for (const theme of ['light', 'dark']) {
-    await library.locator('#theme-select').selectOption(theme);
-    await library.waitForFunction(theme => document.documentElement.dataset.theme === theme && !document.querySelector('#theme-select').disabled, theme);
+    await library.locator(`label[for=theme-${theme}]`).click();
+    await library.waitForFunction(theme => document.documentElement.dataset.theme === theme && !document.querySelector('#theme-control').disabled, theme);
     assert.equal(await library.evaluate(() => getComputedStyle(document.documentElement).colorScheme), theme);
     const controlsMatch = await library.evaluate(() => {
       const probe = document.createElement('span');
@@ -74,6 +92,12 @@ export async function themeAppearance({ library, results }) {
     assert.deepEqual(await library.locator('.tab-image img').evaluateAll(images => images.map(img => img.src)), pictures);
     assert.ok(await library.locator('.tab-image img').evaluateAll(images => images.every(img => getComputedStyle(img).filter === 'none')));
     backdrops.push(await library.evaluate(() => getComputedStyle(document.documentElement).backgroundColor));
+    await library.locator('#theme-control').evaluate(control => Promise.allSettled(control.getAnimations({ subtree: true }).map(animation => animation.finished)));
+    assert.ok(await library.locator('#theme-control').evaluate((control, theme) => {
+      const indicator = getComputedStyle(control, '::before');
+      const x = new DOMMatrixReadOnly(indicator.transform).m41;
+      return Math.abs(x - ['light', 'dark', 'system'].indexOf(theme) * parseFloat(indicator.width)) < 1;
+    }, theme), 'Selection indicator reaches the chosen icon');
     await library.screenshot({ path: path.join(results, `theme-deck-${theme}.png`), fullPage: true });
     // Check the actual palette's small-text contrast, not just its color names.
     const contrast = await library.evaluate(() => {
@@ -97,7 +121,18 @@ export async function themeAppearance({ library, results }) {
     await library.screenshot({ path: path.join(results, `theme-no-results-${theme}.png`), fullPage: true });
     await library.locator('#clear-tab-empty-search').click();
     await library.setViewportSize({ width: 620, height: 900 });
-    assert.ok(await library.locator('#theme-select').isVisible());
+    assert.ok(await library.locator('#theme-control').isVisible());
+    const narrowControl = await library.locator('#theme-control').boundingBox();
+    assert.ok(narrowControl.x < 70 && narrowControl.y + narrowControl.height <= 900, 'Slider remains within the narrow sidebar');
+    const firstIcon = await library.locator('label[for=theme-light]').boundingBox();
+    const lastIcon = await library.locator('label[for=theme-system]').boundingBox();
+    assert.ok(firstIcon.y < lastIcon.y, 'Narrow sidebar stacks the three options vertically');
+    await library.locator('label[for=theme-system]').click();
+    await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+    assert.equal(await library.locator('#theme-system').isChecked(), true);
+    await library.locator(`label[for=theme-${theme}]`).click();
+    await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+    await library.locator('#theme-control').evaluate(control => Promise.allSettled(control.getAnimations({ subtree: true }).map(animation => animation.finished)));
     assert.ok(await library.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await library.screenshot({ path: path.join(results, `theme-narrow-${theme}.png`), fullPage: true });
     await library.setViewportSize({ width: 1440, height: 1000 });
@@ -109,7 +144,7 @@ export async function themeAppearance({ library, results }) {
   await library.screenshot({ path: path.join(results, 'theme-library-dark.png'), fullPage: true });
   await library.locator('.deck-card').first().click();
   await library.locator('#detail-view').waitFor();
-  await library.locator('#theme-select').selectOption('light');
-  await library.waitForFunction(() => document.documentElement.dataset.theme === 'light' && !document.querySelector('#theme-select').disabled);
+  await library.locator('label[for=theme-light]').click();
+  await library.waitForFunction(() => document.documentElement.dataset.theme === 'light' && !document.querySelector('#theme-control').disabled);
   console.log('PASS: both palettes, native controls, contrast, dialogs, scoped-search empty states, narrow layouts, and unchanged screenshot/deck data');
 }

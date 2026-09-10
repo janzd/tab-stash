@@ -16,8 +16,7 @@
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.themePreference = preference;
     document.documentElement.style.colorScheme = theme;
-    const select = document.querySelector('#theme-select');
-    if (select) select.value = preference;
+    for (const input of document.querySelectorAll('#theme-control input')) input.checked = input.value === preference;
     const error = document.querySelector('#theme-error');
     if (error) { error.textContent = errorMessage; error.hidden = !errorMessage; }
   }
@@ -56,14 +55,15 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     render();
-    document.querySelector('#theme-select').addEventListener('change', async event => {
-      const select = event.target;
+    document.querySelector('#theme-control').addEventListener('change', async event => {
+      const control = event.currentTarget;
+      const restoreFocus = event.target === document.activeElement;
       const previous = preference;
-      const choice = normalize(select.value);
+      const choice = normalize(event.target.value);
       const changeRevision = ++revision;
       errorMessage = '';
       apply(choice);
-      select.disabled = true;
+      control.disabled = true;
       try {
         if (storage) await storage.local.set({ [KEY]: choice });
         else localStorage.setItem(CACHE, choice);
@@ -71,7 +71,13 @@
         if (revision === changeRevision) apply(previous);
         errorMessage = 'Your theme preference could not be saved. Please try again.';
         render();
-      } finally { select.disabled = false; }
+      } finally {
+        control.disabled = false;
+        // Disabling the group during a save can move focus to the document body.
+        if (restoreFocus && document.activeElement === document.body) {
+          document.querySelector('#theme-control input:checked').focus({ preventScroll: true });
+        }
+      }
     });
   }, { once: true });
 })();

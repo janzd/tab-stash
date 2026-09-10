@@ -17,7 +17,7 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 - Saves sessions as stacked visual deck covers; opens decks into screenshot cards with page titles and domains.
 - Captures the visible viewport, resizes to at most 640 pixels wide, and stores compressed JPEG previews locally.
 - Saves every eligible tab's link before capture starts, then checkpoints after each screenshot.
-- Searches deck names, tab titles, and URLs; sorts by date or name.
+- Searches deck names, tab titles, and URLs in All decks; sorts by date or name. Inside an open deck, search filters individual tab cards by title or URL, shows a match count, and keeps you in the deck. Clear search to see every tab again. Library and per-deck queries stay separate while the page is open; restoring or exporting a filtered deck still includes all its tabs.
 - Opens a single tab or restores an entire deck into new windows, preserving window separation, tab order, and pins.
 - Renames and deletes saved decks. Deletion never closes open tabs.
 - Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.

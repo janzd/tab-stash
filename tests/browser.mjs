@@ -99,8 +99,53 @@ try {
   assert.equal(await library.locator('.deck-card').count(), 0);
   await library.locator('#search').fill('kyoto');
   await library.locator('.deck-card').waitFor();
+  await library.locator('.deck-card').click();
+  await library.locator('#detail-title').waitFor();
+  const searchedDeckHash = new URL(library.url()).hash;
+  assert.equal(await library.locator('#search').inputValue(), '');
+  assert.equal(await library.locator('#search').getAttribute('aria-label'), 'Search tabs in this deck');
+  await library.locator('#search').fill('MAKE /1');
+  assert.equal(new URL(library.url()).hash, searchedDeckHash);
+  assert.equal(await library.locator('#detail-view').isVisible(), true);
+  assert.equal(await library.locator('.tab-card').count(), 1);
+  assert.equal(await library.locator('.tab-card h3').textContent(), pages[1].title);
+  assert.equal(await library.locator('#tab-search-summary').textContent(), '1 of 3 tabs match your search');
+  await library.screenshot({ path: path.join(results, '05-deck-search.png'), fullPage: true });
+  await library.locator('#search').fill('kyoto wonder');
+  assert.equal(await library.locator('.tab-card').count(), 0);
+  assert.equal(await library.locator('#tab-no-results').isVisible(), true);
+  await library.locator('#clear-tab-empty-search').click();
+  assert.equal(await library.locator('.tab-card').count(), 3);
+  assert.equal(await library.locator('#search').inputValue(), '');
+  assert.equal(await library.locator('#search').evaluate(el => el === document.activeElement), true);
+  await library.locator('#search').fill('/2');
+  assert.equal(await library.locator('.tab-card').count(), 1);
+  const filteredExportEvent = library.waitForEvent('download');
+  await library.locator('#export-deck').click();
+  const filteredExport = await filteredExportEvent;
+  const filteredPath = path.join(temp, 'filtered-deck.json');
+  await filteredExport.saveAs(filteredPath);
+  assert.equal(JSON.parse(await readFile(filteredPath, 'utf8')).decks[0].tabs.length, 3);
+  await library.locator('#back').click();
+  await library.locator('#library-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), 'kyoto');
+  assert.equal(await library.locator('#search').getAttribute('aria-label'), 'Search decks and tabs');
+  await library.locator('.deck-card').click();
+  await library.locator('#detail-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), '/2');
+  assert.equal(await library.locator('.tab-card').count(), 1);
+  await library.goBack();
+  await library.locator('#library-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), 'kyoto');
+  await library.goForward();
+  await library.locator('#detail-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), '/2');
+  await library.locator('#clear-tab-search').click();
+  assert.equal(await library.locator('.tab-card').count(), 3);
+  await library.locator('#back').click();
+  await library.locator('#library-view').waitFor();
   await library.locator('#search').fill('');
-  console.log('PASS: rename and title search');
+  console.log('PASS: scoped title/URL search, match count, no results, clearing, navigation, and full-deck export while filtered');
 
   const downloadEvent = library.waitForEvent('download');
   await library.locator('#export-all').click();
@@ -118,6 +163,26 @@ try {
   assert.equal((await dbDecks()).length, 2);
   console.log('PASS: screenshot backup round trip, unique import IDs, unsafe import rejection');
 
+  await library.locator('.deck-card').nth(0).click();
+  await library.locator('#detail-view').waitFor();
+  await library.locator('#search').fill('kyoto');
+  await library.locator('#back').click();
+  await library.locator('#library-view').waitFor();
+  await library.locator('.deck-card').nth(1).click();
+  await library.locator('#detail-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), '');
+  await library.locator('#search').fill('space');
+  await library.locator('#back').click();
+  await library.locator('#library-view').waitFor();
+  await library.locator('.deck-card').nth(0).click();
+  await library.locator('#detail-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), 'kyoto');
+  assert.equal(await library.locator('.tab-card').count(), 1);
+  await library.locator('#back').click();
+  await library.locator('#library-view').waitFor();
+  assert.equal(await library.locator('#search').inputValue(), '');
+  console.log('PASS: separate queries for each deck and the library');
+
   // Additional decks exist only in this isolated test profile, never in the shipped extension.
   await library.evaluate(async base => {
     const { addDecks } = await import('./db.js');
@@ -133,6 +198,9 @@ try {
   await library.setViewportSize({ width: 1440, height: 1000 });
 
   await library.locator('.deck-card').first().click();
+  await library.locator('#detail-view').waitFor();
+  await library.locator('#search').fill('KYOTO');
+  assert.equal(await library.locator('.tab-card').count(), 1);
   const beforeRestore = await library.evaluate(() => chrome.tabs.query({}));
   await library.locator('#restore-deck').click();
   await until(async () => (await library.evaluate(() => chrome.tabs.query({}))).length === beforeRestore.length + 3, 'restore');
@@ -140,7 +208,7 @@ try {
   assert.equal(new Set(newTabs.map(t => t.windowId)).size, 1);
   assert.deepEqual(newTabs.map(t => t.url || t.pendingUrl), first.tabs.map(t => t.url));
   await library.evaluate(ids => chrome.tabs.remove(ids), newTabs.map(t => t.id));
-  console.log('PASS: deck restore into a new window with ordered URLs');
+  console.log('PASS: filtered deck restores every saved tab into a new window with ordered URLs');
 
   await library.bringToFront();
   await library.locator('#delete-deck').click();

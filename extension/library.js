@@ -1,9 +1,11 @@
 import { getDecks, getDeck, putDeck, deleteDeck, addDecks } from './db.js';
-import { hostname, searchDecks, validateBackup, backup, MAX_IMPORT_BYTES, restorable } from './model.js';
+import { hostname, searchDecks, searchTabs, validateBackup, backup, MAX_IMPORT_BYTES, restorable } from './model.js';
 
 const $ = selector => document.querySelector(selector);
 let decks = [];
 let selectedId = null;
+let libraryQuery = '';
+const deckQueries = new Map();
 let busy = false;
 let toastTimer;
 let lastResult;
@@ -70,7 +72,17 @@ function deckCard(deck) {
 
 function render() {
   $('#deck-count').textContent = decks.length;
-  const visible = searchDecks(decks, $('#search').value);
+  $('#export-all').disabled = busy || !decks.length;
+  const deck = decks.find(d => d.id === selectedId);
+  $('#library-view').hidden = !!deck;
+  $('#detail-view').hidden = !deck;
+  $('#crumb').textContent = deck?.name || 'All decks';
+  const query = deck ? deckQueries.get(deck.id) || '' : libraryQuery;
+  if ($('#search').value !== query) $('#search').value = query;
+  $('#search').placeholder = deck ? 'Find a tab in this deck…' : 'Find a deck, title, or URL…';
+  $('#search').setAttribute('aria-label', deck ? 'Search tabs in this deck' : 'Search decks and tabs');
+  if (deck) { renderDetail(deck); return; }
+  const visible = searchDecks(decks, libraryQuery);
   const sort = $('#sort').value;
   visible.sort(sort === 'name' ? (a, b) => a.name.localeCompare(b.name) : sort === 'oldest' ? (a, b) => a.createdAt - b.createdAt : (a, b) => b.createdAt - a.createdAt);
   $('#deck-total').textContent = visible.length;
@@ -79,12 +91,6 @@ function render() {
   $('#no-results').hidden = !decks.length || !!visible.length;
   const tabs = decks.reduce((sum, d) => sum + d.tabs.length, 0);
   $('#library-stats').textContent = decks.length ? `${decks.length} ${decks.length === 1 ? 'deck' : 'decks'} · ${tabs} tabs tucked away · Stored locally` : 'A little space for everything you’re exploring.';
-  $('#export-all').disabled = busy || !decks.length;
-  const deck = decks.find(d => d.id === selectedId);
-  $('#library-view').hidden = !!deck;
-  $('#detail-view').hidden = !deck;
-  $('#crumb').textContent = deck?.name || 'All decks';
-  if (deck) renderDetail(deck);
 }
 
 function renderDetail(deck) {
@@ -92,7 +98,15 @@ function renderDetail(deck) {
   $('#detail-date').textContent = `STASHED ${date(deck.createdAt, true).toUpperCase()}`;
   const previews = deck.tabs.filter(t => t.screenshot).length;
   $('#detail-meta').textContent = `${deck.tabs.length} tabs · ${previews} screenshots · ${new Set(deck.tabs.map(t => t.windowIndex)).size} ${new Set(deck.tabs.map(t => t.windowIndex)).size === 1 ? 'window' : 'windows'}${deck.status !== 'complete' ? ` · ${deck.status}` : ''}`;
-  $('#tab-grid').replaceChildren(...deck.tabs.map(tab => {
+  const query = deckQueries.get(deck.id) || '';
+  const visibleTabs = searchTabs(deck.tabs, query);
+  const searching = !!query.trim();
+  $('#tab-search-summary').textContent = searching
+    ? `${visibleTabs.length} of ${deck.tabs.length} tabs match your search`
+    : 'One moment, all your tabs.';
+  $('#clear-tab-search').hidden = !searching;
+  $('#tab-no-results').hidden = !searching || !!visibleTabs.length;
+  $('#tab-grid').replaceChildren(...visibleTabs.map(tab => {
     const card = element('a', 'tab-card');
     card.href = restorable(tab.url) ? tab.url : '#';
     card.target = '_blank';
@@ -177,9 +191,17 @@ $('#cancel-capture').addEventListener('click', safely(async () => {
 }));
 for (const id of ['new-deck', 'empty-stash']) $(`#${id}`).addEventListener('click', openSave);
 for (const button of document.querySelectorAll('.close-dialog')) button.addEventListener('click', () => button.closest('dialog').close());
-$('#search').addEventListener('input', () => { if (selectedId) location.hash = ''; render(); });
+function setSearch(query) {
+  const deck = decks.find(d => d.id === selectedId);
+  if (deck) deckQueries.set(deck.id, query);
+  else libraryQuery = query;
+  render();
+}
+$('#search').addEventListener('input', () => { setSearch($('#search').value); });
 $('#sort').addEventListener('change', render);
-$('#clear-search').addEventListener('click', () => { $('#search').value = ''; render(); $('#search').focus(); });
+for (const id of ['clear-search', 'clear-tab-search', 'clear-tab-empty-search']) {
+  $(`#${id}`).addEventListener('click', () => { setSearch(''); $('#search').focus(); });
+}
 for (const id of ['all-decks', 'back']) $(`#${id}`).addEventListener('click', () => { location.hash = ''; });
 window.addEventListener('hashchange', () => { selectedId = location.hash.slice(1) || null; render(); });
 document.addEventListener('keydown', event => {
@@ -204,6 +226,7 @@ $('#delete-form').addEventListener('submit', safely(async event => {
   event.preventDefault();
   if (busy) throw new Error('Wait for the current capture to finish.');
   await deleteDeck(selected().id);
+  deckQueries.delete(selectedId);
   $('#delete-dialog').close();
   selectedId = null;
   location.hash = '';

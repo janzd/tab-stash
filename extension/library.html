@@ -46,8 +46,9 @@
     <section id="detail-view" class="content" hidden>
       <button id="back" class="back-button">← All decks</button>
       <div class="detail-heading"><div><div id="detail-date" class="eyebrow"></div><h1 id="detail-title"></h1><p id="detail-meta"></p></div><div class="detail-actions"><button id="rename-deck" class="secondary">Rename</button><button id="restore-deck" class="primary">Restore deck <span aria-hidden="true">↗</span></button></div></div>
-      <div class="detail-toolbar"><p>One moment, all your tabs.</p><div><button id="export-deck" class="text-button">Export deck</button><button id="delete-deck" class="text-button danger">Delete deck</button></div></div>
+      <div class="detail-toolbar"><p id="tab-search-summary" role="status" aria-live="polite">One moment, all your tabs.</p><div><button id="clear-tab-search" class="text-button" hidden>Clear search</button><button id="export-deck" class="text-button">Export deck</button><button id="delete-deck" class="text-button danger">Delete deck</button></div></div>
       <div id="tab-grid" class="tab-grid"></div>
+      <div id="tab-no-results" class="no-results" hidden><h2>No matching tabs in this deck.</h2><p>Try a different title or URL, or clear the search to see every tab.</p><button id="clear-tab-empty-search" class="secondary">Clear search</button></div>
     </section>
   </main>
   <dialog id="save-dialog">

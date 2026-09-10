@@ -26,6 +26,14 @@ export function searchDecks(decks, query) {
   });
 }
 
+export function searchTabs(tabs, query) {
+  const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return tabs.filter(tab => {
+    const text = `${tab.title} ${tab.url}`.toLocaleLowerCase();
+    return terms.every(term => text.includes(term));
+  });
+}
+
 export function validateBackup(input) {
   if (input?.app !== 'TabStash' || input.version !== BACKUP_VERSION || !Array.isArray(input.decks)) {
     throw new Error('Choose a valid TabStash backup (version 1).');

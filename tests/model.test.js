@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateBackup, backup, searchDecks, captureReason, restorable } from '../extension/model.js';
+import { validateBackup, backup, searchDecks, searchTabs, captureReason, restorable } from '../extension/model.js';
 
 const deck = () => ({ id: 'a', name: 'Weekend research', createdAt: 1700000000000, status: 'complete', tabs: [{ title: 'A quiet hotel', url: 'https://example.com/kyoto', windowIndex: 1, pinned: true, screenshot: 'data:image/jpeg;base64,YWJj', captureNote: null }] });
 test('backup round trip preserves screenshots, window layout, pins, and URLs', () => {
@@ -14,6 +14,23 @@ test('backup round trip preserves screenshots, window layout, pins, and URLs', (
 test('search combines words across deck name, titles, and URLs without case sensitivity', () => {
   assert.equal(searchDecks([deck()], 'WEEKEND kyoto quiet').length, 1);
   assert.equal(searchDecks([deck()], 'mountain').length, 0);
+});
+test('tab search matches case-insensitive title and URL terms on the same tab', () => {
+  const tabs = [
+    { title: 'A quiet hotel', url: 'https://example.com/kyoto' },
+    { title: 'A mountain walk', url: 'https://example.com/osaka' }
+  ];
+  assert.deepEqual(searchTabs(tabs, '  QUIET\tKyOtO  '), [tabs[0]]);
+  assert.deepEqual(searchTabs(tabs, '/osaka'), [tabs[1]]);
+  assert.deepEqual(searchTabs(tabs, 'quiet mountain'), []);
+  assert.deepEqual(searchTabs(tabs, 'missing'), []);
+});
+test('empty tab search returns every tab in original order without changing the saved collection', () => {
+  const tabs = Object.freeze([Object.freeze(deck().tabs[0]), Object.freeze({ title: 'Other tab', url: 'https://other.example' })]);
+  assert.deepEqual(searchTabs(tabs, ' \n '), tabs);
+  assert.deepEqual(searchTabs(tabs, 'kyoto'), [tabs[0]]);
+  assert.equal(tabs.length, 2);
+  assert.deepEqual(searchTabs([], 'kyoto'), []);
 });
 test('rejects executable URLs and SVG screenshot payloads', () => {
   for (const url of ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'chrome-extension://other/page.html']) {

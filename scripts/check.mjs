@@ -5,7 +5,7 @@ import path from 'node:path';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const manifest = JSON.parse(readFileSync(path.join(root, 'extension/manifest.json'), 'utf8'));
 if (manifest.manifest_version !== 3) throw new Error('Manifest V3 required');
-for (const file of [manifest.background.service_worker, ...Object.values(manifest.icons), 'library.html', 'library.js', 'styles.css']) {
+for (const file of [manifest.background.service_worker, ...Object.values(manifest.icons), 'library.html', 'library.js', 'theme.js', 'themes.css', 'styles.css']) {
   if (!existsSync(path.join(root, 'extension', file))) throw new Error(`Missing extension asset: ${file}`);
 }
 for (const file of readdirSync(path.join(root, 'extension')).filter(file => file.endsWith('.js'))) {

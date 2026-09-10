@@ -4,6 +4,7 @@ import { cp, mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { themePreferences, themeAppearance } from './themes-browser.mjs';
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : '@playwright/test');
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -37,11 +38,12 @@ async function until(fn, label, timeout = 25000) {
   throw new Error(`Timed out: ${label}`);
 }
 
-try {
-  context = await chromium.launchPersistentContext(path.join(temp, 'profile'), {
+const launchOptions = {
     channel: 'chromium', executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, headless: false, viewport: { width: 1440, height: 1000 },
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`, '--no-first-run', '--no-default-browser-check']
-  });
+};
+try {
+  context = await chromium.launchPersistentContext(path.join(temp, 'profile'), launchOptions);
   const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).host;
   const pageErrors = [];
@@ -55,6 +57,7 @@ try {
   library.on('pageerror', error => pageErrors.push(error.message));
   await library.goto(`chrome-extension://${id}/library.html`);
   await library.locator('#empty-stash').waitFor();
+  await themePreferences({ context, library, results });
   await library.screenshot({ path: path.join(results, '01-empty.png'), fullPage: true });
   const dbDecks = () => library.evaluate(async () => (await import('./db.js')).getDecks());
   const captureStatus = () => library.evaluate(async () => (await chrome.storage.session.get('capture')).capture);
@@ -88,6 +91,7 @@ try {
   await library.locator('.tab-card').first().waitFor();
   assert.equal(await library.locator('.tab-card').count(), 3);
   console.log('PASS: IndexedDB persistence across reload');
+  await themeAppearance({ library, results });
 
   await library.locator('#rename-deck').click();
   await library.locator('#rename-input').fill('Slow weekends');
@@ -275,6 +279,17 @@ try {
   await library.evaluate(async ({ ids, extra }) => { await chrome.tabs.remove(ids); await chrome.windows.remove(extra); }, { ids: multiRestored.map(t => t.id), extra });
   console.log('PASS: multi-window capture/restore, pinned tabs, restricted-page fallback, concurrent capture rejection');
   assert.deepEqual(pageErrors, [], 'No uncaught UI errors');
+  await library.locator('label[for=theme-dark]').click();
+  await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
+  await context.close();
+  context = await chromium.launchPersistentContext(path.join(temp, 'profile'), launchOptions);
+  const restarted = await context.newPage();
+  await restarted.emulateMedia({ colorScheme: 'light' });
+  await restarted.goto(`chrome-extension://${id}/library.html`);
+  await restarted.locator('#theme-control').waitFor();
+  assert.equal(await restarted.getAttribute('html', 'data-theme'), 'dark');
+  assert.equal(await restarted.locator('#theme-control input:checked').inputValue(), 'dark');
+  console.log('PASS: theme preference persists across a full browser restart');
   console.log('All browser integration checks passed.');
 } finally {
   await context?.close();

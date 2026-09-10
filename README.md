@@ -23,12 +23,13 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 - Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.
 - Stops capture while retaining all saved links and completed previews.
 - Recovers interrupted sessions on the next library visit.
+- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
 
 ## How screenshots work
 
 Chrome's `tabs.captureVisibleTab` API can capture only the active tab. TabStash briefly activates each eligible tab and focuses its window, waits for rendering, and captures it serially (below Chrome's two-captures-per-second limit). It restores the previous active tabs and focused window after completion or cancellation. Leave Chrome alone while capture runs to avoid missing previews.
 
-Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota.
+Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves the theme preference; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota.
 
 ## Current limits
 
@@ -54,7 +55,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
+The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
 
 ## Project map
 
@@ -68,9 +69,11 @@ extension/
   library.html        Deck browser and dialogs
   library.js          UI, restore, import, and export
   styles.css          Responsive visual design
+  themes.css          Light and dark interface palettes
+  theme.js            Early theme setup, preference storage, and live synchronization
   icons/              Packaged toolbar/app icons
 tests/                Unit and real-browser integration tests
 scripts/check.mjs     Manifest, asset, and syntax checks
 ```
 
-API references: [Chrome tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs), [optional permissions](https://developer.chrome.com/docs/extensions/reference/api/permissions), [service worker lifecycle](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle).
+API references: [Chrome storage](https://developer.chrome.com/docs/extensions/reference/api/storage), [Chrome tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs), [optional permissions](https://developer.chrome.com/docs/extensions/reference/api/permissions), [service worker lifecycle](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle).

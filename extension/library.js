@@ -310,7 +310,6 @@ await safely(async () => {
   await refresh();
 })();
 
-$('#open-settings').addEventListener('click', safely(async () => {
-  requireChrome();
-  await chrome.runtime.openOptionsPage();
-}));
+$('#open-settings').addEventListener('click', () => {
+  location.href = 'settings.html';
+});

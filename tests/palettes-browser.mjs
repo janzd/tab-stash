@@ -8,9 +8,17 @@ export async function paletteSettings({ context, library, results }) {
   const errors = [];
   assert.deepEqual(await library.evaluate(() => chrome.runtime.getManifest().options_ui), { page: 'settings.html', open_in_tab: true });
   assert.equal(await library.getAttribute('html', 'data-palette'), 'blue');
-  const opened = context.waitForEvent('page');
+  const tabCount = context.pages().length;
   await library.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = await opened;
+  await library.waitForURL(settingsURL);
+  await library.locator('.palette-card').last().waitFor();
+  assert.equal(context.pages().length, tabCount, 'The gear opens Settings in the current tab');
+  await library.goBack();
+  await library.waitForURL(deckURL);
+  await library.locator('#detail-view').waitFor();
+  // Deliberately open a second page to exercise synchronization across existing tabs.
+  const settings = await context.newPage();
+  await settings.goto(settingsURL);
   settings.on('pageerror', error => errors.push(error.message));
   await settings.waitForURL(settingsURL);
   await settings.locator('.palette-card').last().waitFor();
@@ -89,14 +97,15 @@ export async function paletteSettings({ context, library, results }) {
 
   // The library overview exposes the same entry point and registered Options route.
   await library.locator('#back').click();
-  const reopened = context.waitForEvent('page');
   await library.locator('#open-settings').click();
-  const options = await reopened;
-  await options.waitForURL(settingsURL);
-  await options.locator('#palette-amber').waitFor();
-  await options.close();
+  await library.waitForURL(settingsURL);
+  await library.locator('#palette-amber').waitFor();
+  assert.equal(context.pages().length, tabCount, 'The overview gear also uses the current tab');
+  await library.locator('.topbar a').click();
+  await library.waitForURL(new URL('library.html', settingsURL).href);
+  await library.locator('#library-view').waitFor();
   await library.locator('.deck-card').first().click();
   await library.locator('#detail-view').waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS: registered Options, gear in library/deck, 4 paired palettes, contrast, keyboard, live sync, defaults, persistence, narrow Settings, and unchanged decks');
+  console.log('PASS: registered Options, same-tab gear and Back navigation, 4 paired palettes, contrast, keyboard, live sync, defaults, persistence, narrow Settings, and unchanged decks');
 }

@@ -82,7 +82,7 @@ export async function themeAppearance({ library, results }) {
       const probe = document.createElement('span');
       document.body.append(probe);
       try {
-        return [['.nav-item.active', '--accent-soft'], ['#restore-deck', '--green'], ['#rename-deck', '--surface']].every(([selector, token]) => {
+        return [['.nav-item.active', '--accent-soft'], ['#restore-deck', '--accent'], ['#rename-deck', '--surface']].every(([selector, token]) => {
           probe.style.backgroundColor = `var(${token})`;
           return getComputedStyle(document.querySelector(selector)).backgroundColor === getComputedStyle(probe).backgroundColor;
         });
@@ -106,7 +106,7 @@ export async function themeAppearance({ library, results }) {
       const luminance = token => rgb(token).map(v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
       return [
         ['--ink', '--paper'], ['--muted', '--paper'], ['--muted', '--surface'],
-        ['--on-accent', '--green'], ['--accent-text', '--accent-soft'],
+        ['--on-accent', '--accent'], ['--accent-text', '--accent-soft'],
         ['--on-toast', '--toast-bg'], ['--on-danger', '--danger-bg'],
         ['--on-toast-error', '--toast-error-bg']
       ].map(([fg, bg]) => ({ pair: `${fg}/${bg}`, ratio: (Math.max(luminance(fg), luminance(bg)) + 0.05) / (Math.min(luminance(fg), luminance(bg)) + 0.05) }));

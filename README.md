@@ -23,7 +23,7 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 - Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.
 - Stops capture while retaining all saved links and completed previews.
 - Recovers interrupted sessions on the next library visit.
-- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
+- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. Light keeps its sage palette; Dark uses neutral charcoal with cool blue accents. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
 
 ## How screenshots work
 
@@ -56,6 +56,8 @@ npm run test:e2e
 ```
 
 The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
+
+Interface colors live in `extension/themes.css` as semantic variables, including accents, surfaces, deck covers, and illustrations. Future selectable palettes must each define coordinated light and dark variants with the same accent family: for example, blue accents in both modes for a Blue palette, or green accents in both modes for a Sage palette. Palette choice stays independent of Light/Dark/System, and changing the mode must never switch the chosen palette. The current sage-light/charcoal-blue-dark combination is an interim default, not the model for future selectable palettes. A palette chooser is not included yet.
 
 ## Project map
 

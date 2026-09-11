@@ -1,83 +1,101 @@
-// Run before stylesheets: the cache avoids a flash while Chrome storage is read.
-// chrome.storage.local is authoritative; this cache never contains deck data.
+// Run before stylesheets: caches avoid a flash while Chrome storage is read.
+// chrome.storage.local is authoritative; these caches never contain deck data.
 (() => {
-  const KEY = 'themePreference';
-  const CACHE = 'tabstash.themePreference';
-  const normalize = value => ['light', 'dark', 'system'].includes(value) ? value : 'system';
+  const catalog = globalThis.TabStashPalettes;
+  const mode = { key: 'themePreference', control: '#theme-control', values: ['light', 'dark', 'system'], fallback: 'system', label: 'theme' };
+  const palette = { key: 'palettePreference', control: '#palette-control', values: catalog.presets.map(item => item.id), fallback: catalog.defaultId, label: 'color palette' };
+  const settings = [mode, palette];
   const system = matchMedia('(prefers-color-scheme: dark)');
   const storage = globalThis.chrome?.storage;
-  let preference = 'system';
-  let revision = 0;
-  let errorMessage = '';
-  try { preference = normalize(localStorage.getItem(CACHE)); } catch { /* Cache is optional. */ }
-
-  function render() {
-    const theme = preference === 'system' ? (system.matches ? 'dark' : 'light') : preference;
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.themePreference = preference;
-    document.documentElement.style.colorScheme = theme;
-    for (const input of document.querySelectorAll('#theme-control input')) input.checked = input.value === preference;
-    const error = document.querySelector('#theme-error');
-    if (error) { error.textContent = errorMessage; error.hidden = !errorMessage; }
+  for (const setting of settings) {
+    setting.cache = `tabstash.${setting.key}`;
+    setting.revision = 0;
+    setting.error = '';
+    setting.normalize = value => setting.values.includes(value) ? value : setting.fallback;
+    setting.value = setting.fallback;
+    try { setting.value = setting.normalize(localStorage.getItem(setting.cache)); } catch { /* Cache is optional. */ }
   }
 
-  function apply(value) {
-    preference = normalize(value);
-    try { localStorage.setItem(CACHE, preference); } catch { /* Chrome storage still persists the choice. */ }
+  function render() {
+    const theme = mode.value === 'system' ? (system.matches ? 'dark' : 'light') : mode.value;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.themePreference = mode.value;
+    document.documentElement.dataset.palette = palette.value;
+    document.documentElement.style.colorScheme = theme;
+    for (const setting of settings) {
+      for (const input of document.querySelectorAll(`${setting.control} input`)) input.checked = input.value === setting.value;
+    }
+    const error = document.querySelector('#theme-error');
+    const message = settings.map(setting => setting.error).filter(Boolean).join(' ');
+    if (error) { error.textContent = message; error.hidden = !message; }
+  }
+
+  function apply(setting, value) {
+    setting.value = setting.normalize(value);
+    try { localStorage.setItem(setting.cache, setting.value); } catch { /* Chrome storage still persists the choice. */ }
     render();
   }
 
   render();
   system.addEventListener('change', render);
-
   if (storage) {
     storage.onChanged.addListener((changes, area) => {
-      if (area !== 'local' || !changes[KEY]) return;
-      revision++;
-      errorMessage = '';
-      apply(changes[KEY].newValue);
+      if (area !== 'local') return;
+      for (const setting of settings) {
+        if (!changes[setting.key]) continue;
+        setting.revision++;
+        setting.error = '';
+        apply(setting, changes[setting.key].newValue);
+      }
     });
-    const initialRevision = revision;
-    storage.local.get(KEY).then(result => {
-      // A delayed initial read must not overwrite a more recent user choice.
-      if (revision === initialRevision) apply(result[KEY]);
+    const revisions = settings.map(setting => setting.revision);
+    storage.local.get(settings.map(setting => setting.key)).then(result => {
+      // Guard each preference independently against late reads.
+      settings.forEach((setting, index) => {
+        if (setting.revision === revisions[index]) apply(setting, result[setting.key]);
+      });
     }).catch(() => {
-      if (revision !== initialRevision) return;
-      errorMessage = 'Your saved theme could not be loaded. You can choose a theme again.';
+      settings.forEach((setting, index) => {
+        if (setting.revision === revisions[index]) setting.error = `Your saved ${setting.label} could not be loaded. You can choose it again.`;
+      });
       render();
     });
   } else {
-    // Also allow the standalone HTML preview to use and synchronize themes.
     addEventListener('storage', event => {
-      if (event.key === CACHE || event.key === null) { revision++; apply(event.newValue); }
+      for (const setting of settings) {
+        if (event.key === setting.cache || event.key === null) { setting.revision++; apply(setting, event.newValue); }
+      }
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     render();
-    document.querySelector('#theme-control').addEventListener('change', async event => {
-      const control = event.currentTarget;
-      const restoreFocus = event.target === document.activeElement;
-      const previous = preference;
-      const choice = normalize(event.target.value);
-      const changeRevision = ++revision;
-      errorMessage = '';
-      apply(choice);
-      control.disabled = true;
-      try {
-        if (storage) await storage.local.set({ [KEY]: choice });
-        else localStorage.setItem(CACHE, choice);
-      } catch {
-        if (revision === changeRevision) apply(previous);
-        errorMessage = 'Your theme preference could not be saved. Please try again.';
-        render();
-      } finally {
-        control.disabled = false;
-        // Disabling the group during a save can move focus to the document body.
-        if (restoreFocus && document.activeElement === document.body) {
-          document.querySelector('#theme-control input:checked').focus({ preventScroll: true });
+    for (const setting of settings) {
+      document.querySelector(setting.control)?.addEventListener('change', async event => {
+        const control = event.currentTarget;
+        const restoreFocus = event.target === document.activeElement;
+        const previous = setting.value;
+        const choice = setting.normalize(event.target.value);
+        const revision = ++setting.revision;
+        setting.error = '';
+        apply(setting, choice);
+        control.disabled = true;
+        try {
+          if (storage) await storage.local.set({ [setting.key]: choice });
+          else localStorage.setItem(setting.cache, choice);
+        } catch {
+          if (setting.revision === revision) {
+            apply(setting, previous);
+            setting.error = `Your ${setting.label} preference could not be saved. Please try again.`;
+            render();
+          }
+        } finally {
+          control.disabled = false;
+          if (restoreFocus && document.activeElement === document.body) {
+            document.querySelector(`${setting.control} input:checked`)?.focus({ preventScroll: true });
+          }
         }
-      }
-    });
+      });
+    }
   }, { once: true });
 })();

@@ -309,3 +309,8 @@ await safely(async () => {
   selectedId = location.hash.slice(1) || null;
   await refresh();
 })();
+
+$('#open-settings').addEventListener('click', safely(async () => {
+  requireChrome();
+  await chrome.runtime.openOptionsPage();
+}));

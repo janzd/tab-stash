@@ -23,13 +23,13 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 - Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.
 - Stops capture while retaining all saved links and completed previews.
 - Recovers interrupted sessions on the next library visit.
-- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. Light keeps its sage palette; Dark uses neutral charcoal with cool blue accents. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
+- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. Choose **Blue**, **Sage**, **Violet**, or **Amber** on the separate Settings page, opened with the top-right gear or by right-clicking the extension icon and choosing **Options**. Each palette has matching light and dark accents; all dark variants use neutral charcoal surfaces. Blue is the default for new and existing installations, while existing Light/Dark/System choices are preserved. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
 
 ## How screenshots work
 
 Chrome's `tabs.captureVisibleTab` API can capture only the active tab. TabStash briefly activates each eligible tab and focuses its window, waits for rendering, and captures it serially (below Chrome's two-captures-per-second limit). It restores the previous active tabs and focused window after completion or cancellation. Leave Chrome alone while capture runs to avoid missing previews.
 
-Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves the theme preference; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota.
+Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves appearance preferences; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota.
 
 ## Current limits
 
@@ -57,7 +57,7 @@ npm run test:e2e
 
 The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
 
-Interface colors live in `extension/themes.css` as semantic variables, including accents, surfaces, deck covers, and illustrations. Future selectable palettes must each define coordinated light and dark variants with the same accent family: for example, blue accents in both modes for a Blue palette, or green accents in both modes for a Sage palette. Palette choice stays independent of Light/Dark/System, and changing the mode must never switch the chosen palette. The current sage-light/charcoal-blue-dark combination is an interim default, not the model for future selectable palettes. A palette chooser is not included yet.
+Interface colors live in `extension/themes.css` as semantic variables, including accents, surfaces, deck covers, and illustrations. Each preset defines complete coordinated light and dark variants; Settings previews use those same tokens. `extension/palettes.js` lists the available presets. Palette choice is independent of Light/Dark/System and synchronizes across open Settings and library pages. Missing or invalid palette preferences fall back to Blue. Appearance preferences stay in Chrome local storage and are not included in deck backups.
 
 ## Project map
 
@@ -71,8 +71,12 @@ extension/
   library.html        Deck browser and dialogs
   library.js          UI, restore, import, and export
   styles.css          Responsive visual design
-  themes.css          Light and dark interface palettes
-  theme.js            Early theme setup, preference storage, and live synchronization
+  settings.html       Separate Chrome Options page
+  settings.js         Predefined palette cards and paired previews
+  settings.css        Settings layout and preview styling
+  palettes.js         Shared preset catalog
+  themes.css          Coordinated light/dark semantic palette tokens
+  theme.js            Early appearance setup, preference storage, and live synchronization
   icons/              Packaged toolbar/app icons
 tests/                Unit and real-browser integration tests
 scripts/check.mjs     Manifest, asset, and syntax checks

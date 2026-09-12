@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <title>TabStash — Your visual tab library</title>
   <link rel="icon" href="icons/32.png">
+  <script src="palettes.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="themes.css">
   <link rel="stylesheet" href="styles.css">
@@ -36,7 +37,7 @@
   <main>
     <header class="topbar">
       <div class="breadcrumb">Your space <span>/</span> <strong id="crumb">All decks</strong></div>
-      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Find a deck, title, or URL…" aria-label="Search decks and tabs"><kbd>/</kbd></label>
+      <div class="topbar-actions"><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Find a deck, title, or URL…" aria-label="Search decks and tabs"><kbd>/</kbd></label><button id="open-settings" class="settings-button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-.7 2.2-2 .9-2.1-.5-2 3.4 1.5 1.7v2.6L2.2 15l2 3.4 2.1-.5 2 .9L9 21h4l.7-2.2 2-.9 2.1.5 2-3.4-1.5-1.7v-2.6L19.8 9l-2-3.4-2.1.5-2-.9L13 3Z"/><circle cx="11" cy="12" r="3"/></svg></button></div>
     </header>
     <p id="theme-error" class="theme-error" role="alert" hidden></p>
     <section id="capture-progress" class="capture-progress" hidden aria-live="polite">

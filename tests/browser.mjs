@@ -4,6 +4,7 @@ import { cp, mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { paletteSettings } from './palettes-browser.mjs';
 import { themePreferences, themeAppearance } from './themes-browser.mjs';
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : '@playwright/test');
@@ -92,6 +93,7 @@ try {
   assert.equal(await library.locator('.tab-card').count(), 3);
   console.log('PASS: IndexedDB persistence across reload');
   await themeAppearance({ library, results });
+  await paletteSettings({ context, library, results });
 
   await library.locator('#rename-deck').click();
   await library.locator('#rename-input').fill('Slow weekends');
@@ -289,7 +291,8 @@ try {
   await restarted.locator('#theme-control').waitFor();
   assert.equal(await restarted.getAttribute('html', 'data-theme'), 'dark');
   assert.equal(await restarted.locator('#theme-control input:checked').inputValue(), 'dark');
-  console.log('PASS: theme preference persists across a full browser restart');
+  assert.equal(await restarted.getAttribute('html', 'data-palette'), 'amber');
+  console.log('PASS: theme and palette preferences persist across a full browser restart');
   console.log('All browser integration checks passed.');
 } finally {
   await context?.close();

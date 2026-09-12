@@ -309,3 +309,7 @@ await safely(async () => {
   selectedId = location.hash.slice(1) || null;
   await refresh();
 })();
+
+$('#open-settings').addEventListener('click', () => {
+  location.href = 'settings.html';
+});

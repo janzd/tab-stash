@@ -12,6 +12,16 @@ A little space for your open tabs. TabStash saves a Chrome session as a visual d
 
 After editing extension files, click **Reload** on its card in `chrome://extensions` and reload the TabStash page.
 
+## Try the preview-cache experiment
+
+Open **Settings → Previews while you browse** and enable **Collect previews while browsing**. Grant the existing optional website access if prompted, then browse ordinary web pages. Return to Settings to inspect the latest previews and their capture times. Turn the switch off to pause; **Clear previews** removes only this temporary cache.
+
+This is an opt-in feasibility prototype for issue #6, not automatic session saving. It never activates tabs, focuses windows, navigates, scrolls, or injects scripts. It waits two seconds after browsing events, captures only an eligible active tab in the focused normal window, and discards results when activation, navigation, or window events invalidate the attempt. It skips incognito, sleeping/frozen, loading, audible, full-screen-window, split-view, browser, and local-file tabs. It suspends itself while manual capture runs.
+
+Captures are limited to one attempt per five seconds globally and one successful preview per minute for the same tab/URL. The cache keeps at most 40 entries and 4 MiB of conservatively estimated JSON memory. Previews older than one hour are excluded from display and pruned on subsequent cache writes. Closing a tab removes its preview. `chrome.storage.session` survives service-worker restarts but clears when Chrome restarts or the extension reloads; the opt-in preference persists locally. The gallery shows the latest 12 entries. Saved decks and backup formats are unchanged.
+
+The displayed milliseconds measure screenshot acquisition and thumbnail conversion, not CPU use. Captures are event-driven, so a page left open does not continuously refresh. The prototype does not detect typing, muted video, screen sharing, or changes made without navigation; it avoids changing page state, but real-world performance and preview usefulness still need evaluation. Disabling collection leaves existing previews available until cleared or evicted.
+
 ## What it does
 
 - Saves sessions as stacked visual deck covers; opens decks into screenshot cards with page titles and domains.

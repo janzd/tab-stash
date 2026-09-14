@@ -1,10 +1,32 @@
 import { getDecks, putDeck } from './db.js';
 import { restorable } from './model.js';
+import { createPreviewCollector, ENABLED_KEY } from './preview-cache.js';
 import { captureTab } from './capture.js';
 
 let running = false;
 let cancelled = false;
 let progress = null;
+const previews = createPreviewCollector(chrome, { isBusy: () => running });
+chrome.tabs.onActivated.addListener(() => previews.schedule());
+chrome.tabs.onUpdated.addListener((id, changes) => {
+  if (['url', 'status', 'discarded', 'frozen', 'audible', 'splitViewId'].some(key => key in changes)) previews.schedule();
+});
+chrome.tabs.onRemoved.addListener(id => previews.forget(id));
+chrome.tabs.onDetached.addListener(() => previews.schedule());
+chrome.tabs.onAttached.addListener(() => previews.schedule());
+chrome.windows.onFocusChanged.addListener(() => previews.schedule());
+chrome.windows.onBoundsChanged.addListener(() => previews.schedule());
+chrome.permissions.onRemoved.addListener(() => previews.invalidate());
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[ENABLED_KEY]) previews.schedule();
+});
+previews.schedule();
+
+chrome.runtime.onMessage.addListener((message, sender, respond) => {
+  if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL('settings.html') || message.type !== 'previews:clear') return;
+  previews.clear().then(() => respond({ ok: true }), () => respond({ error: 'Could not clear previews. Please try again.' }));
+  return true;
+});
 
 async function publish(state) {
   progress = state;
@@ -60,6 +82,7 @@ async function capture(message, sender) {
     for (const tab of originalActive) await chrome.tabs.update(tab.id, { active: true }).catch(() => {});
     if (focusedWindow) await chrome.windows.update(focusedWindow, { focused: true }).catch(() => {});
     running = false;
+    previews.resume();
   }
 }
 
@@ -71,7 +94,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     cancelled = false;
     progress = { running: true, done: 0, total: 0, title: 'Getting ready…' };
     respond({ ok: true });
-    void capture(message, sender);
+    void previews.suspend().then(() => capture(message, sender));
   } else if (message.type === 'capture:cancel') {
     cancelled = true;
     respond({ ok: true });

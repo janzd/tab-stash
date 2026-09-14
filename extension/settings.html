@@ -44,6 +44,19 @@
       <p class="settings-description">Choose your colors. Each palette has a matching light and dark look, and works with your sidebar theme setting.</p>
       <fieldset id="palette-control" aria-labelledby="palette-heading"><legend class="sr-only">Color palette</legend></fieldset>
       <p class="settings-footnote">Changes save automatically on this device.</p>
+      <section class="preview-experiment" aria-labelledby="preview-heading">
+        <div class="eyebrow">EXPERIMENTAL</div>
+        <h2 id="preview-heading">Previews while you browse</h2>
+        <p class="settings-description">Help try a quieter way to collect screenshots. After you stay on a page for a moment, TabStash can save a small preview without switching tabs or moving focus.</p>
+        <label class="preview-toggle"><input id="collect-previews" type="checkbox" role="switch" aria-describedby="preview-limits"> Collect previews while browsing</label>
+        <p id="preview-limits" class="settings-description">Only ordinary web pages in the focused window are eligible. Sleeping, loading, audible, full-screen, and split-view tabs are skipped. Previews may contain private page content; they stay on this device.</p>
+        <p class="settings-description">The temporary cache holds up to 40 previews, capped at 4 MiB. Previews older than one hour are ignored. The cache clears when Chrome restarts or the extension reloads. This experiment does not create automatic decks or change your backups.</p>
+        <div class="preview-cache-toolbar"><p id="preview-cache-status" role="status">Paused · 0 cached previews</p><button id="clear-previews" class="secondary">Clear previews</button></div>
+        <p id="preview-error" class="theme-error" role="alert" hidden></p>
+        <p id="preview-cache-empty" class="settings-description">Enable collection, browse a few pages, then return here to see the previews.</p>
+        <div id="preview-cache-grid" class="preview-cache-grid"></div>
+        <p class="settings-footnote">Showing the 12 most recent previews. The time beside each preview measures capture and resizing, not CPU usage.</p>
+      </section>
     </section>
   </main>
 </body>

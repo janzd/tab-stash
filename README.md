@@ -14,7 +14,7 @@ After editing extension files, click **Reload** on its card in `chrome://extensi
 
 ## Try the preview-cache experiment
 
-Open **Settings → Previews while you browse** and enable **Collect previews while browsing**. Grant the existing optional website access if prompted, then browse ordinary web pages. Return to Settings to inspect the latest previews and their capture times. Turn the switch off to pause; **Clear previews** removes only this temporary cache.
+Open **Settings → Previews while you browse** and enable **Collect previews while browsing**. Grant the existing optional website access if prompted, then browse ordinary web pages. Return to Settings to inspect the latest previews and their capture times. Click a preview or its title to open the saved URL in a new tab. Turn the switch off to pause; **Clear previews** removes only this temporary cache.
 
 This is an opt-in feasibility prototype for issue #6, not automatic session saving. It never activates tabs, focuses windows, navigates, scrolls, or injects scripts. It waits two seconds after browsing events, captures only an eligible active tab in the focused normal window, and discards results when activation, navigation, or window events invalidate the attempt. It skips incognito, sleeping/frozen, loading, audible, split-view, browser, and local-file tabs. It supports ordinary browsing in full-screen Chrome windows and suspends itself while manual capture runs. Settings shows the latest collection result or the reason a capture was skipped.
 

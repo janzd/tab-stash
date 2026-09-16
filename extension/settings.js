@@ -48,6 +48,14 @@ async function refreshPreviews() {
     : 'Waiting for a web page. Keep a loaded website active for a few seconds, then return here.';
 
   for (const entry of entries.slice(0, 12)) {
+    if (!/^https?:\/\//i.test(entry.url || '')) continue;
+    const link = document.createElement('a');
+    link.className = 'preview-cache-link';
+    link.href = entry.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.title = entry.url;
+    link.setAttribute('aria-label', `Open tab: ${entry.title}`);
     const card = document.createElement('figure');
     const img = document.createElement('img');
     img.src = entry.screenshot;
@@ -57,11 +65,15 @@ async function refreshPreviews() {
     const title = document.createElement('strong');
     title.textContent = entry.title;
     title.title = entry.url;
+    const domain = document.createElement('span');
+    domain.className = 'preview-cache-domain';
+    domain.textContent = `${new URL(entry.url).hostname} ↗`;
     const time = document.createElement('span');
     time.textContent = `Captured ${new Date(entry.capturedAt).toLocaleTimeString()} · ${entry.durationMs} ms`;
-    caption.append(title, time);
+    caption.append(title, domain, time);
     card.append(img, caption);
-    grid.append(card);
+    link.append(card);
+    grid.append(link);
   }
 }
 toggle.addEventListener('change', async () => {

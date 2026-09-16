@@ -30,6 +30,10 @@ export async function previewCacheExperiment({ context, library, origin, results
   await settings.locator('#collect-previews').check();
   await settings.waitForFunction(() => !document.querySelector('#collect-previews').disabled);
   assert.equal(await settings.locator('#collect-previews').isChecked(), true);
+  // Regression: ordinary macOS full-screen browsing must remain eligible.
+  const windowId = await library.evaluate(async url => (await chrome.tabs.query({})).find(tab => tab.url === url).windowId, first.url());
+  await library.evaluate(id => chrome.windows.update(id, { state: 'fullscreen' }), windowId);
+  await first.waitForTimeout(1500);
   await first.evaluate(() => {
     document.body.style.minHeight = '2000px';
     const input = document.createElement('input');
@@ -48,6 +52,7 @@ export async function previewCacheExperiment({ context, library, origin, results
   const after = await first.evaluate(() => ({ scroll: scrollY, value: document.querySelector('#typing').value, active: document.activeElement.id, events: window.visibilityEvents.length }));
   assert.deepEqual(after, before, 'Passive capture preserves focus, typed input, scroll position, and visibility');
   assert.equal(await first.evaluate(() => document.hasFocus()), true);
+  assert.equal(await library.evaluate(async id => (await chrome.windows.get(id)).state, windowId), 'fullscreen', 'Collecting must not leave full screen');
   const firstEntry = (await cache()).find(entry => entry.url === first.url());
   assert.equal(firstEntry.title, 'Kyoto, at your own pace');
   assert.ok(firstEntry.durationMs >= 0 && firstEntry.capturedAt > 0);
@@ -60,6 +65,8 @@ export async function previewCacheExperiment({ context, library, origin, results
   assert.ok(pixel.width <= 640);
   assert.ok(pixel.rgb.every((channel, index) => Math.abs(channel - [220, 232, 207][index]) <= 8), `Correct page pixels: ${pixel.rgb}`);
 
+  await library.evaluate(id => chrome.windows.update(id, { state: 'normal' }), windowId);
+  await first.waitForTimeout(1500);
   const second = await context.newPage();
   await second.goto(`${origin}/1?preview=second`);
   await second.bringToFront();
@@ -80,6 +87,7 @@ export async function previewCacheExperiment({ context, library, origin, results
   assert.ok(secondPixel.every((channel, index) => Math.abs(channel - [240, 219, 200][index]) <= 8), `Second page pixels: ${secondPixel}`);
   await settings.bringToFront();
   await settings.locator('#preview-cache-grid figure').first().waitFor();
+  assert.match(await settings.locator('#preview-cache-diagnostic').textContent(), /preview/);
   await settings.locator('.preview-experiment').screenshot({ path: path.join(results, 'preview-cache-experiment.png') });
   await settings.setViewportSize({ width: 390, height: 844 });
   assert.ok(await settings.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -99,7 +107,7 @@ export async function previewCacheExperiment({ context, library, origin, results
   await settings.locator('#collect-previews').check();
   await settings.waitForFunction(() => !document.querySelector('#collect-previews').disabled);
   assert.deepEqual(errors, []);
-  console.log(`PASS: opt-in passive previews, screenshot identity, focus/input/scroll preservation, debouncing, pause/clear, unchanged decks; observed first capture + resize ${firstEntry.durationMs} ms`);
+  console.log(`PASS: opt-in passive previews, screenshot identity, full-screen capture with focus/input/scroll preservation, debouncing, pause/clear, unchanged decks; observed first capture + resize ${firstEntry.durationMs} ms`);
   await first.close();
   await second.close();
   await settings.close();

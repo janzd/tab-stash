@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPreviewCollector, boundedPreviews, PREVIEW_KEY, MAX_BYTES, MAX_PREVIEWS, MAX_AGE } from '../extension/preview-cache.js';
+import { createPreviewCollector, boundedPreviews, PREVIEW_KEY, STATUS_KEY, MAX_BYTES, MAX_PREVIEWS, MAX_AGE } from '../extension/preview-cache.js';
 
 function setup(options = {}) {
   let time = 1_000_000;
@@ -8,7 +8,7 @@ function setup(options = {}) {
   const state = {
     tab: { id: 1, windowId: 10, active: true, url: 'https://example.com/a', title: 'Page A', status: 'complete' },
     window: { id: 10, focused: true, type: 'normal', state: 'normal' },
-    enabled: true, permission: true, busy: false, cache: [], calls: [], ...options
+    enabled: true, permission: true, busy: false, cache: [], calls: [], schedules: 0, ...options
   };
   const api = {
     windows: { getLastFocused: async () => ({ ...state.window }) },
@@ -21,7 +21,7 @@ function setup(options = {}) {
       local: { get: async () => ({ previewCacheEnabled: state.enabled }) },
       session: {
         get: async () => ({ [PREVIEW_KEY]: state.cache }),
-        set: async value => { state.cache = value[PREVIEW_KEY]; },
+        set: async value => { if (PREVIEW_KEY in value) state.cache = value[PREVIEW_KEY]; if (STATUS_KEY in value) state.status = value[STATUS_KEY]; },
         remove: async () => { state.cache = []; }
       }
     }
@@ -29,7 +29,7 @@ function setup(options = {}) {
   const collector = createPreviewCollector(api, {
     now: () => time, isBusy: () => state.busy,
     shrink: options.shrink || (async () => 'data:image/jpeg;base64,YQ=='),
-    setTimer: (fn, delay) => { timer = { fn, delay }; return timer; },
+    setTimer: (fn, delay) => { state.schedules++; timer = { fn, delay }; return timer; },
     clearTimer: () => { timer = null; }
   });
   return { state, collector, advance: ms => { time += ms; },
@@ -54,7 +54,7 @@ test('opt-out, absent permission, manual capture, and ineligible tabs never capt
     ...[{ active: false }, { discarded: true }, { frozen: true }, { audible: true }, { status: 'loading' },
       { pendingUrl: 'https://example.com/b' }, { incognito: true }, { url: 'chrome://settings' }, { url: 'file:///a' }, { splitViewId: 3 }]
       .map(value => p => Object.assign(p.state.tab, value)),
-    ...[{ focused: false }, { incognito: true }, { state: 'minimized' }, { state: 'fullscreen' }, { type: 'popup' }]
+    ...[{ focused: false }, { incognito: true }, { state: 'minimized' }, { type: 'popup' }]
       .map(value => p => Object.assign(p.state.window, value))
   ]) {
     const p = setup(); change(p); await p.run();
@@ -147,4 +147,46 @@ test('different tabs still respect the global capture interval', async () => {
   await p.run();
   assert.ok(p.state.cache[0].capturedAt - first >= 5000);
   assert.equal(p.state.cache.length, 2);
+});
+
+
+test('background tab updates do not starve a pending foreground capture', async () => {
+  const p = setup();
+  p.collector.schedule();
+  for (let i = 0; i < 20; i++) p.collector.tabUpdated(2, { status: 'loading' }, { active: false });
+  assert.equal(p.state.schedules, 1);
+  await p.fire();
+  assert.equal(p.state.cache.length, 1);
+});
+
+test('capture errors and missing permissions leave actionable diagnostics', async () => {
+  const p = setup({ capture: async () => { throw Error('Screen capture is disabled'); } });
+  await p.run();
+  assert.equal(p.state.status.state, 'error');
+  assert.match(p.state.status.message, /Screen capture is disabled/);
+  p.state.permission = false;
+  await p.run();
+  assert.equal(p.state.status.state, 'blocked');
+  assert.match(p.state.status.message, /Website access/);
+});
+
+test('returning to Settings preserves the reason the last page was skipped', async () => {
+  const p = setup();
+  p.state.tab.audible = true;
+  await p.run();
+  assert.match(p.state.status.message, /playing sound/);
+  p.state.tab = { ...p.state.tab, audible: false, url: 'chrome-extension://test/settings.html' };
+  const previous = p.state.status;
+  await p.run();
+  assert.deepEqual(p.state.status, previous);
+});
+
+
+test('ordinary browsing in a full-screen Chrome window collects previews', async () => {
+  const p = setup();
+  p.state.window.state = 'fullscreen';
+  await p.run();
+  assert.deepEqual(p.state.calls, [10]);
+  assert.equal(p.state.cache.length, 1);
+  assert.equal(p.state.status.state, 'saved');
 });

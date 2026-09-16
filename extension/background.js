@@ -8,15 +8,14 @@ let cancelled = false;
 let progress = null;
 const previews = createPreviewCollector(chrome, { isBusy: () => running });
 chrome.tabs.onActivated.addListener(() => previews.schedule());
-chrome.tabs.onUpdated.addListener((id, changes) => {
-  if (['url', 'status', 'discarded', 'frozen', 'audible', 'splitViewId'].some(key => key in changes)) previews.schedule();
-});
+chrome.tabs.onUpdated.addListener(previews.tabUpdated);
 chrome.tabs.onRemoved.addListener(id => previews.forget(id));
 chrome.tabs.onDetached.addListener(() => previews.schedule());
 chrome.tabs.onAttached.addListener(() => previews.schedule());
 chrome.windows.onFocusChanged.addListener(() => previews.schedule());
 chrome.windows.onBoundsChanged.addListener(() => previews.schedule());
-chrome.permissions.onRemoved.addListener(() => previews.invalidate());
+chrome.permissions.onRemoved.addListener(() => previews.schedule());
+chrome.permissions.onAdded.addListener(() => previews.schedule());
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes[ENABLED_KEY]) previews.schedule();
 });

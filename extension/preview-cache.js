@@ -1,6 +1,7 @@
 import { thumbnail } from './capture.js';
 
 export const PREVIEW_KEY = 'previewCache';
+export const STATUS_KEY = 'previewCacheStatus';
 export const ENABLED_KEY = 'previewCacheEnabled';
 export const MAX_PREVIEWS = 40;
 export const MAX_BYTES = 4 * 1024 * 1024;
@@ -21,11 +22,18 @@ export function boundedPreviews(entries, now = Date.now()) {
     });
 }
 
-export function eligiblePreview(tab) {
-  return !!tab && tab.active && !tab.incognito && !tab.discarded && !tab.frozen && !tab.audible &&
-    tab.status === 'complete' && !tab.pendingUrl && /^https?:\/\//i.test(tab.url || '') &&
-    (tab.splitViewId == null || tab.splitViewId === -1);
+export function previewSkipReason(tab) {
+  if (!tab?.active) return 'Waiting for an active tab.';
+  if (tab.incognito) return 'Private browsing tabs are excluded.';
+  if (tab.discarded || tab.frozen) return 'Sleeping tabs are left asleep.';
+  if (tab.audible) return 'Tabs playing sound are skipped. Try a quiet web page.';
+  if (tab.status !== 'complete' || tab.pendingUrl) return 'Waiting for the page to finish loading.';
+  if (!/^https?:\/\//i.test(tab.url || '')) return 'Only web pages can be collected. Visit a website and stay there for a few seconds.';
+  if (tab.splitViewId != null && tab.splitViewId !== -1) return 'Split-view tabs are currently skipped. Try a single tab.';
+  return null;
 }
+
+export function eligiblePreview(tab) { return previewSkipReason(tab) === null; }
 
 // No method in this controller activates, focuses, navigates, scrolls, or injects into a page.
 export function createPreviewCollector(api, {
@@ -39,11 +47,23 @@ export function createPreviewCollector(api, {
   let lastAttempt = -Infinity;
 
   function invalidate() { generation++; clearTimer(timer); timer = undefined; }
-  async function current() {
+  async function report(state, message) {
+    await api.storage.session.set({ [STATUS_KEY]: { state, message, at: now() } }).catch(() => {});
+  }
+  async function current(explain = false) {
     const window = await api.windows.getLastFocused();
-    if (!window.focused || window.incognito || window.type !== 'normal' || ['minimized', 'fullscreen'].includes(window.state)) return null;
+    const reason = !window.focused ? 'Chrome must be the focused application to collect a preview.'
+      : window.incognito ? 'Private browsing windows are excluded.'
+      : window.type !== 'normal' ? 'Use a normal browser window to collect previews.'
+      : window.state === 'minimized' ? 'Minimized windows are skipped.' : null;
+    if (reason) { if (explain) await report('skipped', reason); return null; }
     const [tab] = await api.tabs.query({ active: true, windowId: window.id });
-    if (!eligiblePreview(tab)) return null;
+    const skipped = previewSkipReason(tab);
+    if (skipped) {
+      // Returning to Settings must not erase the reason the preceding web page failed.
+      if (explain && !tab?.url?.startsWith(api.runtime?.getURL('') || 'chrome-extension://')) await report('skipped', skipped);
+      return null;
+    }
     return tab;
   }
   async function collect(token) {
@@ -51,13 +71,20 @@ export function createPreviewCollector(api, {
     if (!valid()) return;
     const enabled = await api.storage.local.get(ENABLED_KEY);
     if (enabled[ENABLED_KEY] !== true || !valid()) return;
-    if (!await api.permissions.contains({ origins: ['<all_urls>'] }) || !valid()) return;
-    const tab = await current();
+    if (!await api.permissions.contains({ origins: ['<all_urls>'] })) {
+      if (valid()) await report('blocked', 'Website access is missing. Turn collection off and on to grant access again.');
+      return;
+    }
+    if (!valid()) return;
+    const tab = await current(true);
     if (!tab || !valid()) return;
     const stored = await api.storage.session.get(PREVIEW_KEY);
     const entries = boundedPreviews(stored[PREVIEW_KEY] || [], now());
     const previous = entries.find(entry => entry.tabId === tab.id && entry.url === tab.url);
-    if (previous && now() - previous.capturedAt < TAB_INTERVAL) return;
+    if (previous && now() - previous.capturedAt < TAB_INTERVAL) {
+      await report('ready', 'This page already has a recent preview.');
+      return;
+    }
     if (!valid() || now() - lastAttempt < GLOBAL_INTERVAL) return;
     // Recheck after asynchronous storage and permission reads.
     const before = await current();
@@ -71,7 +98,8 @@ export function createPreviewCollector(api, {
     if (!valid()) return;
     const entry = { tabId: tab.id, url: tab.url, title: tab.title || tab.url, screenshot,
       capturedAt: started, durationMs: Math.max(0, now() - started) };
-    await api.storage.session.set({ [PREVIEW_KEY]: boundedPreviews([entry, ...entries.filter(item => item.tabId !== tab.id)], now()) });
+    await api.storage.session.set({ [PREVIEW_KEY]: boundedPreviews([entry, ...entries.filter(item => item.tabId !== tab.id)], now()),
+      [STATUS_KEY]: { state: 'saved', message: 'A preview was collected successfully.', at: now() } });
   }
   function schedule() {
     invalidate();
@@ -82,8 +110,16 @@ export function createPreviewCollector(api, {
       // Serialize capture and cache mutations. Failures simply defer until another browsing event.
       job = job.then(async () => {
         await collect(token);
-      }).catch(() => {});
+      }).catch(async error => {
+        if (generation === token && !suspended && !isBusy()) {
+          await report('error', `Chrome could not collect a preview: ${String(error?.message || error).slice(0, 240)}`);
+        }
+      });
     }, Math.max(SETTLE_MS, GLOBAL_INTERVAL - (now() - lastAttempt)));
+  }
+  function tabUpdated(id, changes, tab) {
+    // Background page refreshes must not keep resetting the foreground settling timer.
+    if (tab.active && ['url', 'status', 'discarded', 'frozen', 'audible', 'splitViewId'].some(key => key in changes)) schedule();
   }
   async function suspend() { suspended = true; invalidate(); await job; }
   function resume() { suspended = false; schedule(); }
@@ -102,5 +138,5 @@ export function createPreviewCollector(api, {
     }).catch(() => {});
     schedule();
   }
-  return { schedule, invalidate, suspend, resume, clear, forget, drain: () => job };
+  return { tabUpdated, schedule, invalidate, suspend, resume, clear, forget, drain: () => job };
 }

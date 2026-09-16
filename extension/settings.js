@@ -19,7 +19,7 @@ for (const palette of catalog.presets) {
 }
 
 // The experiment is separate from saved decks and remains off until explicitly enabled.
-const { PREVIEW_KEY, ENABLED_KEY, boundedPreviews } = await import('./preview-cache.js');
+const { PREVIEW_KEY, ENABLED_KEY, STATUS_KEY, boundedPreviews } = await import('./preview-cache.js');
 const toggle = document.querySelector('#collect-previews');
 const cacheError = document.querySelector('#preview-error');
 const clearPreviews = document.querySelector('#clear-previews');
@@ -32,7 +32,7 @@ async function refreshPreviews() {
     return;
   }
   const [local, session] = await Promise.all([
-    chrome.storage.local.get(ENABLED_KEY), chrome.storage.session.get(PREVIEW_KEY)
+    chrome.storage.local.get(ENABLED_KEY), chrome.storage.session.get([PREVIEW_KEY, STATUS_KEY])
   ]);
   if (revision !== previewRevision) return;
   toggle.checked = local[ENABLED_KEY] === true;
@@ -41,6 +41,12 @@ async function refreshPreviews() {
   grid.replaceChildren();
   document.querySelector('#preview-cache-status').textContent = `${toggle.checked ? 'Collecting' : 'Paused'} · ${entries.length} cached preview${entries.length === 1 ? '' : 's'}`;
   document.querySelector('#preview-cache-empty').hidden = entries.length > 0;
+  const status = session[STATUS_KEY];
+  const diagnostic = document.querySelector('#preview-cache-diagnostic');
+  diagnostic.textContent = !toggle.checked ? 'Collection is paused.'
+    : status ? `Last check at ${new Date(status.at).toLocaleTimeString()}: ${status.message}`
+    : 'Waiting for a web page. Keep a loaded website active for a few seconds, then return here.';
+
   for (const entry of entries.slice(0, 12)) {
     const card = document.createElement('figure');
     const img = document.createElement('img');
@@ -85,7 +91,7 @@ clearPreviews.addEventListener('click', async () => {
   finally { clearPreviews.disabled = false; }
 });
 globalThis.chrome?.storage?.onChanged.addListener((changes, area) => {
-  if ((area === 'local' && changes[ENABLED_KEY]) || (area === 'session' && changes[PREVIEW_KEY])) {
+  if ((area === 'local' && changes[ENABLED_KEY]) || (area === 'session' && (changes[PREVIEW_KEY] || changes[STATUS_KEY]))) {
     void refreshPreviews().catch(() => showCacheError('Could not load the preview cache. Please try again.'));
   }
 });

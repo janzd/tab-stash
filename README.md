@@ -22,6 +22,16 @@ Captures are limited to one attempt per five seconds globally and one successful
 
 The displayed milliseconds measure screenshot acquisition and thumbnail conversion, not CPU use. Captures are event-driven, so a page left open does not continuously refresh. The prototype does not detect typing, muted video, screen sharing, or changes made without navigation; it avoids changing page state, but real-world performance and preview usefulness still need evaluation. Disabling collection leaves existing previews available until cleared or evicted.
 
+## Automatic recovery saves
+
+Open **Settings → Automatic recovery saves** and enable **Save sessions automatically**. This is off by default. Choose a check interval of 1, 5, 15, 30, or 60 minutes (default: 5), and keep up to 10, 25, 50, or 100 saves (default: 50). Open **Recovery** in the sidebar to browse dated sessions, reopen a single link, restore a session into new windows, or delete history.
+
+Recovery saves contain titles, URLs, tab order, pinned state, and window separation from all normal, non-incognito windows. They never capture screenshots, activate tabs, focus windows, navigate, or wake sleeping tabs. Browser and local-file pages are included as links where Chrome permits restoration; extension pages, developer tools, and unsupported addresses are excluded. Unchanged sessions do not create duplicate saves. Closing a tab does not remove it from earlier recovery saves.
+
+History is stored locally in a separate persistent database and survives browser restarts. Disabling automatic saving keeps existing history. Automatic retention never deletes manual decks. History is limited by the selected count and a conservative 20 MiB metadata budget; an individual save exceeding 10 MiB is skipped while existing history is preserved. The latest save from the previous browser session is protected from automatic pruning during the current session, within the selected count limit. Explicit deletion can remove it.
+
+Chrome alarms can run late, especially during sleep. After startup, saving waits at least one minute and allows up to five minutes for tabs to settle; empty sessions never replace previous saves. A crash can therefore lose changes made since the last successful save. Restoration opens URLs, not forms, navigation history, or page state. Recovery history is separate from visual decks and is **not included in deck JSON exports/imports**.
+
 ## What it does
 
 - Saves sessions as stacked visual deck covers; opens decks into screenshot cards with page titles and domains.
@@ -39,7 +49,7 @@ The displayed milliseconds measure screenshot acquisition and thumbnail conversi
 
 Chrome's `tabs.captureVisibleTab` API can capture only the active tab. TabStash briefly activates each eligible tab and focuses its window, waits for rendering, and captures it serially (below Chrome's two-captures-per-second limit). It restores the previous active tabs and focused window after completion or cancellation. Leave Chrome alone while capture runs to avoid missing previews.
 
-Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves appearance preferences; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota.
+Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves appearance preferences; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota; `alarms` schedules metadata-only recovery checks when enabled.
 
 ## Current limits
 
@@ -65,7 +75,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
+The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. Recovery checks cover real alarms, startup grace, deduplication, retention, interrupted writes, restoring windows and pins, and persistence across a browser restart. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
 
 Interface colors live in `extension/themes.css` as semantic variables, including accents, surfaces, deck covers, and illustrations. Each preset defines complete coordinated light and dark variants; Settings previews use those same tokens. `extension/palettes.js` lists the available presets. Palette choice is independent of Light/Dark/System and synchronizes across open Settings and library pages. Missing or invalid palette preferences fall back to Blue. Appearance preferences stay in Chrome local storage and are not included in deck backups.
 
@@ -83,7 +93,14 @@ extension/
   styles.css          Responsive visual design
   settings.html       Separate Chrome Options page
   settings.js         Predefined palette cards and paired previews
-  settings.css        Settings layout and preview styling
+  settings.css        Settings and recovery layouts
+  recovery.html       Separate automatic session history page
+  recovery.js         Browse, restore, and delete recovery saves
+  recovery-service.js Alarm scheduling, startup protection, and serialized operations
+  recovery-model.js   Metadata filtering, deduplication, and retention policy
+  recovery-db.js      Persistent recovery history and atomic pruning
+  recovery-restore.js Reopen saved windows and pinned tabs
+  recovery-settings.js Automatic-save preferences and status
   palettes.js         Shared preset catalog
   themes.css          Coordinated light/dark semantic palette tokens
   theme.js            Early appearance setup, preference storage, and live synchronization

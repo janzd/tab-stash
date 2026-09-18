@@ -1,3 +1,4 @@
+import { installRecovery } from './recovery-service.js';
 import { getDecks, putDeck } from './db.js';
 import { restorable } from './model.js';
 import { createPreviewCollector, ENABLED_KEY } from './preview-cache.js';
@@ -6,6 +7,7 @@ import { captureTab } from './capture.js';
 let running = false;
 let cancelled = false;
 let progress = null;
+installRecovery(chrome, { isBusy: () => running });
 const previews = createPreviewCollector(chrome, { isBusy: () => running });
 chrome.tabs.onActivated.addListener(() => previews.schedule());
 chrome.tabs.onUpdated.addListener(previews.tabUpdated);

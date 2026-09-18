@@ -221,3 +221,6 @@ main{margin-left:70px}
 .settings-button:hover{background:var(--soft);border-color:var(--line);color:var(--ink)}
 .settings-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
 @media(max-width:700px){.topbar-actions{width:100%;gap:8px}.topbar-actions .search{min-width:0;flex:1}}
+
+.sidebar a.nav-item{text-decoration:none;color:var(--ink)}
+.sidebar a.nav-item.active{color:var(--accent-text)}

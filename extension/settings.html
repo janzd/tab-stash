@@ -12,12 +12,14 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="settings.css">
   <script type="module" src="settings.js"></script>
+  <script type="module" src="recovery-settings.js"></script>
 </head>
 <body>
   <aside class="sidebar">
     <a class="brand" href="library.html" aria-label="TabStash home"><span class="brand-mark" aria-hidden="true">▱</span>TabStash<span class="brand-dot">.</span></a>
     <div class="workspace-label">YOUR SPACE</div>
     <a class="nav-item" href="library.html"><span aria-hidden="true">▦</span> All decks</a>
+    <a class="nav-item" href="recovery.html"><span aria-hidden="true">↺</span> Recovery</a>
     <a class="nav-item active" href="settings.html" aria-current="page"><span aria-hidden="true">⚙</span> Settings</a>
     <div class="sidebar-bottom">
       <fieldset id="theme-control" class="theme-switch">
@@ -44,6 +46,22 @@
       <p class="settings-description">Choose your colors. Each palette has a matching light and dark look, and works with your sidebar theme setting.</p>
       <fieldset id="palette-control" aria-labelledby="palette-heading"><legend class="sr-only">Color palette</legend></fieldset>
       <p class="settings-footnote">Changes save automatically on this device.</p>
+      <section class="recovery-preferences" aria-labelledby="automatic-recovery-heading">
+        <h2 id="automatic-recovery-heading">Automatic recovery saves</h2>
+        <p class="settings-description">Keep a safety net for browser crashes. Save the titles and links of all open tabs without taking screenshots or switching tabs.</p>
+        <fieldset id="recovery-settings" class="recovery-settings">
+          <legend class="sr-only">Automatic recovery saves</legend>
+          <label class="preview-toggle"><input id="recovery-enabled" type="checkbox" role="switch"> Save sessions automatically</label>
+          <div class="recovery-options">
+            <label>Check every <select id="recovery-interval" aria-label="Recovery save interval"><option value="1">1 minute</option><option value="5" selected>5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></label>
+            <label>Keep up to <select id="recovery-retention" aria-label="Recovery saves to keep"><option value="10">10 saves</option><option value="25">25 saves</option><option value="50" selected>50 saves</option><option value="100">100 saves</option></select></label>
+          </div>
+        </fieldset>
+        <p id="recovery-setting-status" class="settings-description" role="status"></p>
+        <p id="recovery-setting-error" class="theme-error" role="alert" hidden></p>
+        <p class="settings-description">Only changed sessions create a save. History survives browser restarts and closing tabs. Chrome may delay checks, so changes after the latest save may be lost in a crash. A storage limit may keep fewer saves; your latest save from the previous browser run is protected from automatic cleanup during this run.</p>
+        <a class="secondary recovery-history-link" href="recovery.html">Open recovery history →</a>
+      </section>
       <section class="preview-experiment" aria-labelledby="preview-heading">
         <div class="eyebrow">EXPERIMENTAL</div>
         <h2 id="preview-heading">Previews while you browse</h2>

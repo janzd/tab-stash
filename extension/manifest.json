@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "A little space for your open tabs. Save, browse, and restore visual decks of screenshots.",
   "minimum_chrome_version": "120",
-  "permissions": ["tabs", "storage", "unlimitedStorage"],
+  "permissions": ["tabs", "storage", "unlimitedStorage", "alarms"],
   "optional_host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js", "type": "module" },
   "options_ui": { "page": "settings.html", "open_in_tab": true },

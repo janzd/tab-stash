@@ -1,3 +1,4 @@
+import { recoveryBrowser } from './recovery-browser.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { cp, mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
@@ -282,6 +283,7 @@ try {
   await library.evaluate(async ({ ids, extra }) => { await chrome.tabs.remove(ids); await chrome.windows.remove(extra); }, { ids: multiRestored.map(t => t.id), extra });
   console.log('PASS: multi-window capture/restore, pinned tabs, restricted-page fallback, concurrent capture rejection');
   await previewCacheExperiment({ context, library, origin, results });
+  await recoveryBrowser({ context, library, origin, results });
   assert.deepEqual(pageErrors, [], 'No uncaught UI errors');
   await library.locator('label[for=theme-dark]').click();
   await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
@@ -297,6 +299,11 @@ try {
   assert.equal(await restarted.evaluate(async () => (await chrome.storage.local.get('previewCacheEnabled')).previewCacheEnabled), true);
   assert.equal(await restarted.evaluate(async () => ((await chrome.storage.session.get('previewCache')).previewCache || []).length), 0);
   console.log('PASS: appearance and preview opt-in persist across restart; temporary previews are cleared');
+  const recovered = await restarted.evaluate(async () => (await import('./recovery-db.js')).recoveryHistory());
+  assert.equal(recovered.length, 1, 'Recovery history survives a real browser restart');
+  assert.equal(await restarted.evaluate(async () => (await chrome.storage.local.get('recoveryPreferences')).recoveryPreferences.enabled), true);
+  await until(() => restarted.evaluate(async () => !!await chrome.alarms.get('tabstash-recovery')), 'recovery alarm after restart');
+  console.log('PASS: persistent recovery history and scheduling across a browser restart');
   console.log('All browser integration checks passed.');
 } finally {
   await context?.close();

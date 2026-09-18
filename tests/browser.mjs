@@ -4,6 +4,7 @@ import { cp, mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { previewCacheExperiment } from './preview-cache-browser.mjs';
 import { paletteSettings } from './palettes-browser.mjs';
 import { themePreferences, themeAppearance } from './themes-browser.mjs';
 
@@ -25,7 +26,7 @@ const pages = [
   { title: 'Collect a little wonder', subtitle: 'Notes from the road less taken', color: '#d9e4ef', ink: '#345171', kicker: 'SOMEWHERE ELSE', shape: '50%' }
 ];
 const server = createServer((req, res) => {
-  const index = Number(req.url?.slice(1)) || 0;
+  const index = Number(new URL(req.url, 'http://fixture').pathname.slice(1)) || 0;
   const p = pages[index % pages.length];
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(`<!doctype html><title>${p.title}</title><style>*{box-sizing:border-box}body{margin:0;background:${p.color};color:${p.ink};font-family:Arial}nav{padding:28px 5%;display:flex;justify-content:space-between;border-bottom:1px solid #0002;font-size:12px;letter-spacing:2px}main{padding:8% 8%;display:flex;align-items:center;gap:8%}section{width:58%}small{letter-spacing:3px;font-size:10px}h1{font:64px Georgia;line-height:1.1;letter-spacing:-2px;margin:26px 0}p{font:16px Georgia}button{margin-top:22px;padding:14px 22px;color:${p.color};background:${p.ink};border:0;border-radius:4px}aside{width:34%;height:330px;border-radius:${p.shape};background:linear-gradient(140deg,#ffffff99,${p.ink});position:relative}aside:after{content:'';position:absolute;inset:25%;border:1px solid #ffffff88;border-radius:50%}footer{padding:20px 5%;font-size:10px;letter-spacing:2px;border-top:1px solid #0002}</style><nav><b>${p.kicker}</b><span>PLACES &nbsp; NOTES &nbsp; ABOUT</span></nav><main><section><small>FIND YOUR NEXT CHAPTER</small><h1>${p.title}</h1><p>${p.subtitle}</p><button>Explore the collection ↗</button></section><aside></aside></main><footer>GOOD THINGS TAKE A LITTLE EXPLORING.</footer>`);
@@ -280,6 +281,7 @@ try {
   assert.equal(multiRestored.filter(t => t.pinned).length, 1);
   await library.evaluate(async ({ ids, extra }) => { await chrome.tabs.remove(ids); await chrome.windows.remove(extra); }, { ids: multiRestored.map(t => t.id), extra });
   console.log('PASS: multi-window capture/restore, pinned tabs, restricted-page fallback, concurrent capture rejection');
+  await previewCacheExperiment({ context, library, origin, results });
   assert.deepEqual(pageErrors, [], 'No uncaught UI errors');
   await library.locator('label[for=theme-dark]').click();
   await library.waitForFunction(() => !document.querySelector('#theme-control').disabled);
@@ -292,7 +294,9 @@ try {
   assert.equal(await restarted.getAttribute('html', 'data-theme'), 'dark');
   assert.equal(await restarted.locator('#theme-control input:checked').inputValue(), 'dark');
   assert.equal(await restarted.getAttribute('html', 'data-palette'), 'amber');
-  console.log('PASS: theme and palette preferences persist across a full browser restart');
+  assert.equal(await restarted.evaluate(async () => (await chrome.storage.local.get('previewCacheEnabled')).previewCacheEnabled), true);
+  assert.equal(await restarted.evaluate(async () => ((await chrome.storage.session.get('previewCache')).previewCache || []).length), 0);
+  console.log('PASS: appearance and preview opt-in persist across restart; temporary previews are cleared');
   console.log('All browser integration checks passed.');
 } finally {
   await context?.close();

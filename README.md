@@ -6,6 +6,10 @@ TabStash is a Chrome extension that turns your open tabs into visual decks of sc
 
 Everything stays in your Chrome profile. No account, cloud service, or analytics.
 
+![TabStash in light mode, showing six saved decks with stacked screenshot covers](docs/images/library.png)
+
+*Your saved sessions, organized as visual decks. All screenshots use sample pages and browsing history.*
+
 ## Features
 
 - **Visual tab decks** — save one window or all windows, then browse your tabs as screenshot cards.
@@ -40,6 +44,10 @@ Chrome briefly switches to each eligible tab to take its screenshot, then return
 
 Open a deck to browse its cards, search its tabs, or restore it into new windows. Saving a deck leaves your current tabs open; close them when you're ready. Restoring a deck also leaves existing tabs in place.
 
+![An open TabStash deck in dark mode, showing six screenshot cards with titles, links, and a Restore deck button](docs/images/deck-dark.png)
+
+*Open a deck to recognize pages at a glance, search its tabs, or restore the session.*
+
 ## Keep a recovery history
 
 Enable **Settings → Automatic recovery saves → Save sessions automatically** to keep periodic snapshots of your open tabs. It is off by default.
@@ -56,6 +64,10 @@ Recovery checks every **5 minutes** and keeps up to **50 saves** by default. Bot
 Open **Recovery** in the sidebar to inspect a saved session, reopen a tab, or restore the whole session into new windows. Saves include all eligible windows in the current Chrome profile; other profiles remain separate. Closing tabs or restarting Chrome does not erase earlier saves. Turning the feature off keeps existing history.
 
 Recovery does not switch tabs, take screenshots, or wake sleeping tabs. Checks may be delayed during startup or sleep, so changes made after the latest completed save may be lost in a crash.
+
+![TabStash recovery history with dated session saves and tab lists grouped into two windows](docs/images/recovery.png)
+
+*Recovery keeps a dated history of titles and links, grouped by window, without screenshots.*
 
 ## Backups and privacy
 

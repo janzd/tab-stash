@@ -1,112 +1,102 @@
 # TabStash
 
-A little space for your open tabs. TabStash saves a Chrome session as a visual deck of small screenshots, titles, and links. Built as a local-first Manifest V3 extension with vanilla JavaScript, CSS, and IndexedDB. No account, server, analytics, external fonts, or build step.
+**Save the tabs. Keep the big picture.**
 
-## Install locally
+TabStash is a Chrome extension that turns your open tabs into visual decks of screenshots, titles, and links. Keep a project, research session, or collection of ideas ready to revisit when you want to clear your workspace.
 
-1. Open `chrome://extensions` in Chrome 120 or later.
-2. Enable **Developer mode**.
-3. Click **Load unpacked** and select this project's **extension** directory (`~/Code/tools/TabStash/extension`).
-4. Pin **TabStash** in Chrome's extensions menu, then click its icon.
-5. Click **Stash open tabs**, name the deck, choose this window or all normal windows, and grant screenshot access when Chrome asks.
+Everything stays in your Chrome profile. No account, cloud service, or analytics.
 
-After editing extension files, click **Reload** on its card in `chrome://extensions` and reload the TabStash page.
+![TabStash in light mode, showing six saved decks with stacked screenshot covers](docs/images/library.png)
 
-## Try the preview-cache experiment
+*Your saved sessions, organized as visual decks. All screenshots use sample pages and browsing history.*
 
-Open **Settings → Previews while you browse** and enable **Collect previews while browsing**. Grant the existing optional website access if prompted, then browse ordinary web pages. Return to Settings to inspect the latest previews and their capture times. Click a preview or its title to open the saved URL in a new tab. Turn the switch off to pause; **Clear previews** removes only this temporary cache.
+## Features
 
-This is an opt-in feasibility prototype for issue #6, not automatic session saving. It never activates tabs, focuses windows, navigates, scrolls, or injects scripts. It waits two seconds after browsing events, captures only an eligible active tab in the focused normal window, and discards results when activation, navigation, or window events invalidate the attempt. It skips incognito, sleeping/frozen, loading, audible, split-view, browser, and local-file tabs. It supports ordinary browsing in full-screen Chrome windows and suspends itself while manual capture runs. Settings shows the latest collection result or the reason a capture was skipped.
+- **Visual tab decks** — save one window or all windows, then browse your tabs as screenshot cards.
+- **Search where you are** — find a deck across your library, or find a specific tab inside an open deck by title or URL.
+- **Restore your workspace** — reopen an individual tab or an entire session, preserving window separation, tab order, and pinned tabs.
+- **Automatic recovery saves** — optionally keep a history of open tabs without taking screenshots or interrupting your browsing.
+- **Portable deck backups** — export and import JSON files with screenshots included.
+- **Make it yours** — choose Light, Dark, or System appearance and a matching Blue, Sage, Violet, or Amber palette.
 
-Captures are limited to one attempt per five seconds globally and one successful preview per minute for the same tab/URL. The cache keeps at most 40 entries and 4 MiB of conservatively estimated JSON memory. Previews older than one hour are excluded from display and pruned on subsequent cache writes. Closing a tab removes its preview. `chrome.storage.session` survives service-worker restarts but clears when Chrome restarts or the extension reloads; the opt-in preference persists locally. The gallery shows the latest 12 entries. Saved decks and backup formats are unchanged.
+## Install
 
-The displayed milliseconds measure screenshot acquisition and thumbnail conversion, not CPU use. Captures are event-driven, so a page left open does not continuously refresh. The prototype does not detect typing, muted video, screen sharing, or changes made without navigation; it avoids changing page state, but real-world performance and preview usefulness still need evaluation. Disabling collection leaves existing previews available until cleared or evicted.
+Requires **Chrome 120 or later**. Install from source using Chrome's **Load unpacked** option; no build step is needed.
 
-## Automatic recovery saves
+1. [Download the source ZIP](https://github.com/janzd/tab-stash/archive/refs/heads/main.zip) and extract it, or clone this repository:
 
-Open **Settings → Automatic recovery saves** and enable **Save sessions automatically**. This is off by default. Choose a check interval of 1, 5, 15, 30, or 60 minutes (default: 5), and keep up to 10, 25, 50, or 100 saves (default: 50). Open **Recovery** in the sidebar to browse dated sessions, reopen a single link, restore a session into new windows, or delete history.
+   ```sh
+   git clone https://github.com/janzd/tab-stash.git
+   ```
 
-Recovery saves contain titles, URLs, tab order, pinned state, and window separation from all normal, non-incognito windows. They never capture screenshots, activate tabs, focus windows, navigate, or wake sleeping tabs. Browser and local-file pages are included as links where Chrome permits restoration; extension pages, developer tools, and unsupported addresses are excluded. Unchanged sessions do not create duplicate saves. Closing a tab does not remove it from earlier recovery saves.
+2. Keep the extracted or cloned folder somewhere permanent.
+3. Open `chrome://extensions` and turn on **Developer mode**.
+4. Click **Load unpacked** and select the `extension` folder inside the project.
+5. Pin TabStash in Chrome's extensions menu and click its icon to open your library.
 
-History is stored locally in a separate persistent database and survives browser restarts. Disabling automatic saving keeps existing history. Automatic retention never deletes manual decks. History is limited by the selected count and a conservative 20 MiB metadata budget; an individual save exceeding 10 MiB is skipped while existing history is preserved. The latest save from the previous browser session is protected from automatic pruning during the current session, within the selected count limit. Explicit deletion can remove it.
+To update, replace or pull the source in the same location, click **Reload** on TabStash's card in `chrome://extensions`, and refresh any open TabStash pages.
 
-Chrome alarms can run late, especially during sleep. After startup, saving waits at least one minute and allows up to five minutes for tabs to settle; empty sessions never replace previous saves. A crash can therefore lose changes made since the last successful save. Restoration opens URLs, not forms, navigation history, or page state. Recovery history is separate from visual decks and is **not included in deck JSON exports/imports**.
+## Save and revisit your tabs
 
-## What it does
+Click **Stash open tabs**, give the deck a name, and choose **This window** or **All normal windows**. Click **Stash tabs** and grant website access when Chrome asks.
 
-- Saves sessions as stacked visual deck covers; opens decks into screenshot cards with page titles and domains.
-- Captures the visible viewport, resizes to at most 640 pixels wide, and stores compressed JPEG previews locally.
-- Saves every eligible tab's link before capture starts, then checkpoints after each screenshot.
-- Searches deck names, tab titles, and URLs in All decks; sorts by date or name. Inside an open deck, search filters individual tab cards by title or URL, shows a match count, and keeps you in the deck. Clear search to see every tab again. Library and per-deck queries stay separate while the page is open; restoring or exporting a filtered deck still includes all its tabs.
-- Opens a single tab or restores an entire deck into new windows, preserving window separation, tab order, and pins.
-- Renames and deletes saved decks. Deletion never closes open tabs.
-- Exports/imports JSON backups with screenshots. Import validates the entire file and creates copies without overwriting existing decks.
-- Stops capture while retaining all saved links and completed previews.
-- Recovers interrupted sessions on the next library visit.
-- Offers **Light**, **Dark**, and **System** themes through the icon slider at the bottom of the left sidebar, just above “On this device. Just for you.” Use the sun, moon, or monitor for Light, Dark, or System; keyboard users can Tab to the control and use arrow keys. In narrow windows, the slider stacks vertically in the sidebar. System is the default and follows device appearance changes live. Choose **Blue**, **Sage**, **Violet**, or **Amber** on the separate Settings page, opened in the current tab with the top-right gear, or by right-clicking the extension icon and choosing **Options**. Each palette has matching light and dark accents; all dark variants use neutral charcoal surfaces. Blue is the default for new and existing installations, while existing Light/Dark/System choices are preserved. The preference is saved in this Chrome profile and synchronized across open TabStash pages. Captured screenshots keep their original colors, and backups contain only decks, not appearance preferences.
+Chrome briefly switches to each eligible tab to take its screenshot, then returns you to where you were. Let capture finish before switching tabs. Sleeping tabs and pages that cannot be captured are kept as links. You can stop capture and keep the links and screenshots already saved.
 
-## How screenshots work
+Open a deck to browse its cards, search its tabs, or restore it into new windows. Saving a deck leaves your current tabs open; close them when you're ready. Restoring a deck also leaves existing tabs in place.
 
-Chrome's `tabs.captureVisibleTab` API can capture only the active tab. TabStash briefly activates each eligible tab and focuses its window, waits for rendering, and captures it serially (below Chrome's two-captures-per-second limit). It restores the previous active tabs and focused window after completion or cancellation. Leave Chrome alone while capture runs to avoid missing previews.
+![An open TabStash deck in dark mode, showing six screenshot cards with titles, links, and a Restore deck button](docs/images/deck-dark.png)
 
-Chrome needs the optional `<all_urls>` permission for this operation. TabStash requests it when you first click **Stash tabs**, rather than during installation. It does not inject scripts or upload any content. `tabs` reads titles, URLs, window membership, and pins; `storage` shares capture progress and saves appearance preferences; `unlimitedStorage` keeps the local screenshot library from hitting the default storage quota; `alarms` schedules metadata-only recovery checks when enabled.
+*Open a deck to recognize pages at a glance, search its tabs, or restore the session.*
 
-## Current limits
+## Keep a recovery history
 
-- Sleeping/discarded tabs, minimized windows, local files, and browser pages are saved as links with a clear placeholder, without loading or waking them. Capture failures also keep the link.
-- Extension pages, developer tools, `data:` / `blob:` URLs, and incognito tabs are excluded. Screenshots of protected pages may be blocked or blank.
-- A page that keeps loading beyond eight seconds is saved without a screenshot. Dynamic content may continue rendering after the initial wait.
-- Restoring reopens URLs, not page history, forms, scroll position, login state, or tab groups. Chrome may reject some internal-page URLs; the restore message reports failures.
-- Backups are limited to 100 MB per file; export individual decks for large libraries. Screenshot backups contain the visible page content, including anything private shown on screen.
-- Local data is tied to this Chrome profile and extension ID. Uninstalling the extension removes its local data. Export a backup first if you want to keep it.
-- This is an unpacked developer version, not a Chrome Web Store release.
+Enable **Settings → Automatic recovery saves → Save sessions automatically** to keep periodic snapshots of your open tabs. It is off by default.
 
-## Development
+| | Visual decks | Recovery saves |
+| --- | --- | --- |
+| When saved | When you choose to stash tabs | Automatically, when enabled |
+| Contents | Titles, links, and available screenshots | Titles and links, without screenshots |
+| Best for | Saving work to revisit later | Recovering tabs after an unexpected closure or crash |
+| Retention | Until you delete a deck | Configurable history limits |
 
-Node.js 22+ is recommended. The extension itself has no runtime dependencies.
+Recovery checks every **5 minutes** and keeps up to **50 saves** by default. Both settings are adjustable. Only changed sessions create a new save, and storage limits may reduce the number kept.
 
-```sh
-npm test
-npm run check
+Open **Recovery** in the sidebar to inspect a saved session, reopen a tab, or restore the whole session into new windows. Saves include all eligible windows in the current Chrome profile; other profiles remain separate. Closing tabs or restarting Chrome does not erase earlier saves. Turning the feature off keeps existing history.
 
-# Optional browser integration tests:
-npm install
-npx playwright install chromium
-npm run test:e2e
-```
+Recovery does not switch tabs, take screenshots, or wake sleeping tabs. Checks may be delayed during startup or sleep, so changes made after the latest completed save may be lost in a crash.
 
-The browser test uses an isolated Chromium profile, local fixture pages, and a temporary copy of the extension with screenshot permission pregranted. It exercises real screenshot capture, persistence, restore, search, rename, backups, cancellation, and deletion without touching your Chrome profile. It also checks theme switching, synchronization across pages, browser-restart persistence, palette contrast, and screenshot preservation. Recovery checks cover real alarms, startup grace, deduplication, retention, interrupted writes, restoring windows and pins, and persistence across a browser restart. It requires a desktop session (headed Chromium); Linux CI can use Xvfb. Screenshots are written under `test-results/`.
+![TabStash recovery history with dated session saves and tab lists grouped into two windows](docs/images/recovery.png)
 
-Interface colors live in `extension/themes.css` as semantic variables, including accents, surfaces, deck covers, and illustrations. Each preset defines complete coordinated light and dark variants; Settings previews use those same tokens. `extension/palettes.js` lists the available presets. Palette choice is independent of Light/Dark/System and synchronizes across open Settings and library pages. Missing or invalid palette preferences fall back to Blue. Appearance preferences stay in Chrome local storage and are not included in deck backups.
+*Recovery keeps a dated history of titles and links, grouped by window, without screenshots.*
 
-## Project map
+## Backups and privacy
 
-```text
-extension/
-  manifest.json       Chrome permissions and entry points
-  background.js       Capture coordinator and worker recovery
-  capture.js          Safe serial tab capture and thumbnail compression
-  db.js               IndexedDB transactions
-  model.js            Search, URL policy, and backup validation
-  library.html        Deck browser and dialogs
-  library.js          UI, restore, import, and export
-  styles.css          Responsive visual design
-  settings.html       Separate Chrome Options page
-  settings.js         Predefined palette cards and paired previews
-  settings.css        Settings and recovery layouts
-  recovery.html       Separate automatic session history page
-  recovery.js         Browse, restore, and delete recovery saves
-  recovery-service.js Alarm scheduling, startup protection, and serialized operations
-  recovery-model.js   Metadata filtering, deduplication, and retention policy
-  recovery-db.js      Persistent recovery history and atomic pruning
-  recovery-restore.js Reopen saved windows and pinned tabs
-  recovery-settings.js Automatic-save preferences and status
-  palettes.js         Shared preset catalog
-  themes.css          Coordinated light/dark semantic palette tokens
-  theme.js            Early appearance setup, preference storage, and live synchronization
-  icons/              Packaged toolbar/app icons
-tests/                Unit and real-browser integration tests
-scripts/check.mjs     Manifest, asset, and syntax checks
-```
+Use **Export library** or **Export deck** to download a JSON backup. Screenshots are embedded in the file alongside titles and links. **Import backup** adds copies without overwriting existing decks.
 
-API references: [Chrome storage](https://developer.chrome.com/docs/extensions/reference/api/storage), [Chrome tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs), [optional permissions](https://developer.chrome.com/docs/extensions/reference/api/permissions), [service worker lifecycle](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle).
+Backups contain **manual decks only**; recovery history, temporary previews, and settings are not included. Files are limited to 100 MB each—export individual decks for larger libraries.
+
+TabStash stores its data locally and does not upload your tabs or screenshots. Website access is requested for screenshot capture. Incognito tabs are excluded. Screenshots and exported backups may contain private information visible on a page, so keep backup files somewhere you trust.
+
+Data belongs to the Chrome profile and extension installation. Uninstalling TabStash removes its local data; export any decks you want to keep first.
+
+## Appearance
+
+Use the sun, moon, or monitor in the sidebar to choose **Light**, **Dark**, or **System**. Choose a color palette in **Settings**, opened with the top-right gear or by right-clicking the extension icon and selecting **Options**. Settings opens in the same tab from the library.
+
+## Experimental previews
+
+**Settings → Previews while you browse** offers an optional preview collector for pages you are already viewing. It is experimental, off by default, and may change or be removed based on feedback.
+
+These previews are temporary: closing a tab removes its preview, and restarting Chrome or reloading the extension clears the cache. They do not become saved decks or screenshots in recovery history. See the [experiment notes](docs/preview-cache-experiment.md) for details and limitations.
+
+## Things to know
+
+- Screenshots capture the visible viewport, not the full page. Some protected pages may produce a blank image or no preview.
+- Sleeping tabs, local files, browser pages, and tabs in minimized windows can be saved as links without screenshots. Extension pages, developer tools, and unsupported addresses are excluded.
+- Restoring reopens URLs, not forms, scroll positions, navigation history, login state, or tab groups. Some internal Chrome pages cannot be reopened.
+
+## Feedback and development
+
+Found a bug or have an idea? [Open an issue](https://github.com/janzd/tab-stash/issues).
+
+For local development, tests, and the project structure, see the [development guide](docs/development.md).

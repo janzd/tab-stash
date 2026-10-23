@@ -38,7 +38,9 @@ The existing README images remain separate because they use a taller viewport. T
 
 ## Other artwork
 
-The current packaged icon is [extension/icons/128.png](../../extension/icons/128.png), a 128 × 128 PNG. Review it before final packaging: its green rounded background reaches the image edges, while Google's square-icon guidance calls for a 96 × 96 mark inside transparent padding. This PR does not redesign the existing icon.
+Use [extension/icons/128.png](../../extension/icons/128.png) for the store icon. It is a 128 × 128 RGBA PNG with a 96 × 96 blue badge and 16 pixels of transparent padding on every side. The badge uses the app's default blue and light tab mark. The packaged 16, 32, and 48 pixel icons use the same design.
+
+See the [native-size preview on light and dark backgrounds](icon-preview.png) and [editable source and regeneration instructions](../brand/README.md). The preview sheet is for asset review, not a store screenshot or promotional tile.
 
 The small promotional tile (440 × 280), marquee tile (1400 × 560), and promotional video are optional and are not included in this set. The four screenshots cover the main product features; optional promotional artwork can follow separately.
 
@@ -62,7 +64,7 @@ Checks require six captured screenshots, six decks, six cards in the open deck, 
 
 - Resolve the security and data-category questions in [privacy declarations](../store-privacy-declarations.md).
 - Decide whether experimental previews ship in the first release. If removed, remove the experimental-preview paragraph from the description and update the policy and permission notes together.
-- Finish the icon review, final package validation, and publisher setup.
+- Finish final package validation and publisher setup.
 - Compare the final listing and screenshots with the package actually being submitted. These materials do not establish store approval.
 
 ## Sources checked

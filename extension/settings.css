@@ -85,3 +85,5 @@
 .recovery-tab span{font-size:11px;color:var(--muted);margin-top:5px}
 .recovery-host{display:none}
 @media(max-width:1050px){.recovery-layout{grid-template-columns:1fr}.recovery-list{max-height:230px}.recovery-content .page-heading{flex-direction:column}}
+
+.privacy-link{color:var(--accent-text);text-decoration:underline;text-underline-offset:3px}

@@ -1,14 +1,14 @@
 # Privacy policy review
 
-Reviewed October 23, 2026, against the extension on `main` at `20515f3`.
+Policy reviewed October 23, 2026. Publication, permissions, and in-product disclosures reviewed October 24, 2026, against `main` at `7249254` and the accompanying disclosure changes.
 
 ## Policy source and publication
 
-The public policy is [PRIVACY.md](../PRIVACY.md). After it is merged into `main`, use this stable URL in the Chrome Web Store privacy-policy field:
+The public policy is [PRIVACY.md](../PRIVACY.md). Use this stable URL in the Chrome Web Store privacy-policy field:
 
 https://github.com/janzd/tab-stash/blob/main/PRIVACY.md
 
-Settings links to this URL. The main-branch URL will not exist until this PR is merged. GitHub hosts the policy; no separate website deployment is needed. The policy uses the existing public issue tracker as the contact channel and tells users not to post private browsing data.
+Settings links to this URL. The public URL returned HTTP 200 on October 24, 2026, after merge. GitHub hosts the policy; no separate website deployment is needed. The policy uses the existing public issue tracker as the contact channel and tells users not to post private browsing data.
 
 ## Implementation evidence
 
@@ -28,9 +28,9 @@ The audit found no upload, analytics, remote-script, or Chrome Sync code in `ext
 This policy documents current behavior; adding it does not establish full Chrome Web Store compliance.
 
 - Resolve the storage-security requirements before submission. Data is stored in IndexedDB and Chrome storage without application-level encryption, and exported JSON is unencrypted. Google's User Data FAQ currently describes encryption at rest, while the consolidated Handling Requirements section emphasizes secure handling and encrypted transmission. Review the applicable requirements and seek clarification from Chrome Web Store support if necessary; do not claim encryption or compliance that has not been verified. An encryption design, if needed, must include a meaningful key-management and recovery model.
-- Review the prominent disclosures shown before manual capture and before enabling either automatic feature. A link to the policy alone is not a substitute for clear in-product disclosure and consent.
-- Complete permission justifications, the data-use declarations, and the remote-code declaration in the publisher dashboard. Do not describe local handling as “no user data handled.”
-- Verify the final public policy URL after merge, and ensure the store listing and policy match the features actually included in the release.
+- Manual capture and both automatic features now describe their data handling before the user acts, with accessible descriptions on the action controls. Screenshot disclosures include private-content warnings. Recheck these against the final release; a policy link alone is not a substitute for disclosure and consent.
+- Use the [draft store declarations](store-privacy-declarations.md) for permission justifications, remote code, and the data-use review. Resolve the noted classification and security questions before completing the publisher dashboard. Do not describe local handling as “no user data handled.”
+- Keep the store listing and policy aligned with the features actually included in the release. The public policy URL has been verified; no dashboard declarations have been submitted.
 
 ## Sources
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>TabStash</title>
+  <!-- 96px square artwork with 16px transparent padding for the store icon. -->
+  <rect x="16" y="16" width="96" height="96" rx="26" fill="#315a9a"/>
+  <!-- Outlined tab mark, matching the app's blue badge and light ink. -->
+  <path d="M42 50 94 44 84 76 32 82Z" fill="none" stroke="#f0f5ff" stroke-width="8" stroke-linejoin="round"/>
+</svg>

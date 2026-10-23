@@ -1,0 +1,27 @@
+Save your open tabs as visual decks of screenshots, titles, and links. TabStash helps you recognize what you saved, find it again, and reopen it when you are ready.
+
+SAVE A SESSION YOU CAN SEE
+Stash one window or all normal windows into a named deck. Browse screenshot cards, search your library, or search within a deck by title or URL. Reopen a single tab or restore a deck with its window separation, tab order, and pinned tabs.
+
+KEEP A RECOVERY HISTORY
+Optional automatic recovery saves keep periodic snapshots of tab titles and links across the normal windows in your current Chrome profile. They do not take screenshots or switch tabs. Choose how often to check and how many saves to keep. Only changed sessions create a new save. Recovery is off by default; Chrome may delay checks, so changes since the latest completed save can still be lost in a crash.
+
+TAKE YOUR DECKS WITH YOU
+Export a deck or your whole library as JSON with screenshots included. Import backups to add copies of saved decks. Backups include manual decks, not recovery history, temporary previews, or settings.
+
+MAKE YOURSELF AT HOME
+Choose Light, Dark, or System appearance, with matching Blue, Sage, Violet, or Amber palettes.
+
+LOCAL TO YOUR CHROME PROFILE
+No TabStash account, cloud service, or analytics. Titles, full URLs, screenshots, and preferences are stored locally and are not uploaded by TabStash. Other Chrome profiles remain separate, and incognito tabs are excluded. Screenshots and URLs may contain private information. Local data and JSON backups are not encrypted by the extension. Uninstalling removes local data, so export decks you want to keep.
+
+WHAT TO EXPECT WHEN SAVING
+Manual capture briefly visits each eligible tab to take a screenshot, then returns you to where you were. Website access is requested for screenshots. Sleeping tabs and pages that cannot be captured are kept as links when supported. Screenshots show the visible part of a page. Saving leaves your current tabs open; you decide when to close them. Restoring reopens URLs, not unsaved forms, scroll positions, or login state.
+
+EXPERIMENTAL PREVIEWS
+An optional, off-by-default preview collector can save small screenshots of pages you are already viewing without switching tabs. These previews are temporary and do not become decks or recovery screenshots. Closing a tab removes its preview; restarting Chrome or reloading the extension clears the cache. This experiment may change or be removed.
+
+Requires Chrome 120 or later.
+
+Privacy policy: https://github.com/janzd/tab-stash/blob/main/PRIVACY.md
+Help and feedback: https://github.com/janzd/tab-stash/issues

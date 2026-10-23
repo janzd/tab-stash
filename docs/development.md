@@ -72,3 +72,7 @@ After startup, saving waits at least one minute and allows up to five minutes fo
 The opt-in preview collector is independent of manual decks and recovery saves. See the [experiment notes](preview-cache-experiment.md) for eligibility, cache limits, validation gaps, and follow-up work.
 
 API references: [Chrome storage](https://developer.chrome.com/docs/extensions/reference/api/storage), [Chrome tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs), [optional permissions](https://developer.chrome.com/docs/extensions/reference/api/permissions), [service worker lifecycle](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle).
+
+## Chrome Web Store release preparation
+
+The [store listing draft](store/listing.md) contains the description, screenshot upload order, and instructions for reproducing the store images with fictional sample tabs. See the [privacy declarations](store-privacy-declarations.md) for permission justifications and unresolved submission questions. These documents are preparation material, not a published listing.

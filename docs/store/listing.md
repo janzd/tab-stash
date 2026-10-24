@@ -63,8 +63,8 @@ Checks require six captured screenshots, six decks, six cards in the open deck, 
 ## Before submission
 
 - Resolve the security and data-category questions in [privacy declarations](../store-privacy-declarations.md).
-- Decide whether experimental previews ship in the first release. If removed, remove the experimental-preview paragraph from the description and update the policy and permission notes together.
-- Finish final package validation and publisher setup.
+- The current candidate includes experimental previews, labeled and off by default. If they are removed later, update the description, policy, and permission notes together.
+- Follow the [release guide](../release.md) for the tested ZIP, remaining manual checks, and publisher setup.
 - Compare the final listing and screenshots with the package actually being submitted. These materials do not establish store approval.
 
 ## Sources checked

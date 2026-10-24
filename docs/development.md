@@ -2,7 +2,7 @@
 
 [← Back to TabStash](../README.md)
 
-Node.js 22+ is recommended. The extension itself has no runtime dependencies.
+Node.js 22+ is recommended. Git and Python 3.9+ are required for release packaging and its tests. The extension itself has no runtime dependencies.
 
 ```sh
 npm test
@@ -76,3 +76,5 @@ API references: [Chrome storage](https://developer.chrome.com/docs/extensions/re
 ## Chrome Web Store release preparation
 
 The [store listing draft](store/listing.md) contains the description, screenshot upload order, and instructions for reproducing the store images with fictional sample tabs. See the [privacy declarations](store-privacy-declarations.md) for permission justifications and unresolved submission questions. These documents are preparation material, not a published listing.
+
+Build a local upload candidate with `npm run package`. The [release guide](release.md) documents the ZIP contents, verification record, and remaining checks before submission.

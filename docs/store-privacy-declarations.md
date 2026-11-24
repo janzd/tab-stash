@@ -1,6 +1,6 @@
 # Chrome Web Store privacy declarations
 
-Prepared October 24, 2026, for TabStash 0.1.0, based on `main` at `7249254` and the disclosure improvements accompanying this document. These are draft dashboard entries, not a submitted or approved listing. Recheck them against the final release package and the dashboard's current field definitions.
+Updated November 24, 2026, for TabStash 0.1.0 following Patrick Kettner's November 3 clarification in the Chromium Extensions group. These entries describe the release candidate and store draft; they do not constitute Chrome Web Store approval.
 
 ## Single purpose
 
@@ -60,18 +60,18 @@ All JavaScript and CSS used by the extension are packaged locally. There are no 
 
 Do not claim “no user data handled” or “no data collected” solely because nothing is uploaded. Google's FAQ explicitly includes local handling and screenshots. The extension has no backend or telemetry, but it does read and retain browsing information.
 
-Use the actual dashboard wording at submission time. The following mapping is based on code behavior, not on access to the publisher's dashboard:
+Use the following selections for the current local-only implementation, based on the [November 3 clarification](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/g9zLwkmhzt8). Recheck if data handling changes:
 
-| Data category | Proposed treatment | Evidence |
+| Data category | Dashboard selection | Evidence |
 | --- | --- | --- |
-| Web history / browsing activity | Declare | Full URLs and titles of open tabs are read and saved, including periodically when recovery is enabled. The absence of the `history` API does not negate this. |
-| Website content | Declare | Manual decks and optional previews store visible-page screenshots. |
-| User activity | Declare conservatively, explaining the narrow use | Tab activation, navigation, closure, and window focus events control optional previews and startup settling. There is no keystroke logging, mouse tracking, or general interaction analytics. |
-| Personally identifiable information, health information, financial/payment information, authentication information, personal communications, and location | Resolve incidental-content classification before final selection | There are no dedicated account, health, payment, password, messaging, or geolocation collection features. However, unredacted screenshots, titles, or full URLs may contain these kinds of information. Do not automatically mark them absent on the basis that TabStash does not extract structured fields. Confirm how the dashboard expects incidental screenshot content to be categorized. |
+| Web history | Check | Full URLs and titles of open tabs are read and saved, including periodically when recovery is enabled. The absence of the `history` API does not negate this. |
+| Website content | Check | Manual decks and optional previews store visible-page screenshots. |
+| User activity | Leave unchecked | Tab/window events trigger feature work but are not retained as an activity log. There is no click, scroll, or keystroke logging. |
+| Personally identifiable information, health information, financial/payment information, authentication information, personal communications, and location | Leave unchecked | TabStash does not specifically collect these categories. Incidental sensitive content in screenshots and URLs is disclosed in the privacy policy; Patrick clarified that it does not require checking these additional categories. |
 
 Suggested explanatory text for reviewer notes:
 
-> TabStash processes data only in the current Chrome profile. It stores tab titles, complete URLs, order, pins, window grouping, save times, and locally generated record identifiers. User-triggered visual decks and opt-in visible-page previews also store screenshots. Automatic recovery and preview collection are disabled by default. Screenshots and URLs are not redacted and may include sensitive page content. Tab and window events support these features; there is no behavioral advertising or analytics. No saved data is uploaded to the publisher or any TabStash service. Users can delete local records and export manual decks to unencrypted JSON files they control.
+> TabStash processes data only in the current Chrome profile. It stores tab titles, complete URLs, order, pins, window grouping, save times, and locally generated record identifiers. User-triggered visual decks and opt-in visible-page previews also store screenshots. Automatic recovery and preview collection are disabled by default. Screenshots and URLs are not redacted and may include sensitive page content. Tab and window events trigger these features and are not retained as an activity log; there is no behavioral advertising or analytics. No saved data is uploaded to the publisher or any TabStash service. Users can delete local records and export manual decks to unencrypted JSON files they control.
 
 Proposed limited-use attestations, to confirm against the dashboard's wording:
 
@@ -79,39 +79,37 @@ Proposed limited-use attestations, to confirm against the dashboard's wording:
 - Data is used only to provide the session-saving features described in the listing and policy.
 - Data is not used for creditworthiness or lending decisions.
 
-These statements describe current use; they do not resolve the separate storage-security question below.
+These statements describe the current implementation. Check the dashboard's exact certification wording before saving.
 
 ## Disclosures before user action
 
 The accompanying UI text describes titles, complete URLs, screenshots where applicable, local storage, and the absence of uploads before users start manual capture or enable either automatic feature. Screenshot disclosure also warns that visible content may be private. The existing **Stash tabs** action and off-by-default feature switches remain the affirmative actions. No extra consent dialog or new collection is introduced.
 
-## Open release questions
+## Resolved policy questions
+
+The inquiry was posted October 25, followed up November 2, and answered by Patrick Kettner on November 3, 2026. A thank-you was sent November 24 and was pending group moderation at submission.
+
+[Inquiry and reply](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/g9zLwkmhzt8).
 
 ### Local encryption and exported backups
 
-The live [User Data FAQ, question 9](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) explicitly describes encryption at rest. The consolidated [Handling Requirements](https://developer.chrome.com/docs/webstore/program-policies/policies) requires secure handling and mentions encrypted transmission. Neither source reviewed here establishes that Chrome extension isolation alone satisfies encryption at rest for this implementation.
+Patrick confirmed that the encryption guidance does not apply to this local-only design, including files exported to the user's own disk. No application-level encryption change is required on that basis. This resolves the earlier release question; it is not approval of the submitted extension.
 
-Current facts: IndexedDB and Chrome local storage contain data without application-level encryption. TabStash does not establish whether the device uses disk encryption. JSON exports are intentionally readable. The policy discloses this; disclosure does not itself establish compliance.
+Keep the existing disclosures: local databases and readable JSON backups are not encrypted by TabStash. Chrome profile isolation is not described as encryption. A privacy policy is still required, and Patrick indicated that the existing policy covers the described handling.
 
-**Keep this unresolved before submission.** Obtain a specific answer from Chrome Web Store support or implement an appropriate encryption design before asserting compliance. Do not describe a hard-coded key or a key stored beside the data as an established solution. Any change must account for browser restarts, unattended recovery saves, key loss, migration of existing data, and user-requested exports.
+### Data categories and event triggers
 
-### Support inquiry draft — not sent
+Use Web history for saved tab metadata and Website content for screenshots. Incidental sensitive content remains disclosed in the policy. Unrecorded tab/window event triggers do not require User activity. The selection table above implements this guidance.
 
-Subject: Local-only session manager: encryption-at-rest and screenshot data declarations
-
-> We are preparing TabStash, a Manifest V3 session-saving extension. It stores titles, full URLs, window layout, and user-requested screenshots locally in IndexedDB; optional recovery stores tab metadata and optional visible-page previews use session storage. It has no backend, uploads, analytics, or remote code. Data is isolated to the extension's Chrome profile but not encrypted by the extension. Users can explicitly export manual decks as readable JSON containing screenshots.
->
-> Does the User Data FAQ's encryption-at-rest requirement require application-level encryption for this local-only design, or is a documented browser/OS protection sufficient? If application encryption is required, what criteria apply to unattended recovery saves and user-requested exports?
->
-> For the privacy dashboard, should unredacted screenshots and URLs be declared under every potentially present sensitive-data category (such as health, financial information, authentication information, personal communications, and location), in addition to website content and browsing activity, even though the extension does not extract or transmit those fields? Which category should cover tab/window events used only to control preview collection?
-
-Send only after the publisher approves the inquiry. Record any response and resulting implementation/declaration changes here.
+Reassess these conclusions if TabStash adds uploads, synchronization, activity logs, or targeted sensitive-data features.
 
 ## Submission status
 
 - Permission justifications and remote-code answer prepared.
 - Public policy URL verified after merge.
 - In-product disclosure wording reviewed and clarified.
-- Dashboard category selections, local-storage security, publisher attestations, and the final package remain to be confirmed. No dashboard fields have been submitted and no support inquiry has been sent.
+- Publisher registration and candidate ZIP upload completed; listing assets and initial privacy fields were saved in the store draft.
+- Data-category and local-encryption questions resolved as recorded above. Final dashboard certifications and review submission remain to be completed.
+- The policy clarification is not a store review or publication approval.
 
 Reference: [Chrome Web Store privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy).

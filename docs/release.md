@@ -1,6 +1,6 @@
 # Release candidate 0.1.0
 
-This is a locally tested candidate, not a published Chrome Web Store release. Experimental previews remain included, clearly labeled and off by default. Automatic recovery is also off by default. The unresolved privacy questions below still need to be addressed before submission.
+This is a locally tested candidate, not a published Chrome Web Store release. Experimental previews remain included, clearly labeled and off by default. Automatic recovery is also off by default. The privacy questions were resolved by Patrick Kettner's November 3, 2026 reply; see the [recorded guidance](store-privacy-declarations.md). The remaining acceptance checks below still apply.
 
 ## Build the upload ZIP
 
@@ -52,13 +52,12 @@ Candidate ZIP SHA-256:
 
 ## Remaining release checks
 
-- Resolve the [local-storage encryption and data-category questions](store-privacy-declarations.md). The extension does not provide application-level encryption, and the existing support inquiry is still only a draft.
 - Check the native website-access prompt, denial, later grant, and permission revocation in the Chrome version used for release acceptance. Test with non-sensitive sample pages in a separate profile.
 - Complete a live sleeping-tab check on a suitable browser build. The prior forced-discard test crashed Chromium even with previews disabled; unit coverage exists, but that live check remains unverified. See the [experiment notes](preview-cache-experiment.md).
 - Verify on the supported Chrome versions and operating systems intended for launch. The automated run above does not establish coverage of Chrome 120 or every platform.
-- Complete publisher registration/account setup, final dashboard declarations, and review submission. Use the [listing materials](store/listing.md), [icon](brand/README.md), and [privacy policy](../PRIVACY.md).
+- Complete final dashboard certifications and review submission. Publisher registration and the candidate ZIP upload are complete. Use the [listing materials](store/listing.md), [icon](brand/README.md), and [privacy policy](../PRIVACY.md).
 
-No ZIP has been uploaded, no dashboard attestation has been submitted, and no GitHub release or tag has been created by this preparation step.
+Release status updated November 24, 2026: the candidate ZIP, listing assets, and initial privacy fields are in the publisher's draft. The clarification resolves the policy questions but does not establish store approval. Review submission, publication, and a GitHub release/tag remain separate steps.
 
 ## Check the packaged candidate manually
 

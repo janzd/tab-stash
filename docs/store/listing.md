@@ -1,6 +1,6 @@
 # Chrome Web Store listing draft
 
-Prepared October 24, 2026, for TabStash 0.1.0 from `main` at `2c964ec`. This is reviewable submission material; nothing has been uploaded to the publisher dashboard or published.
+Prepared October 24, 2026, for TabStash 0.1.0 from `main` at `2c964ec`. Updated November 24, 2026: the listing assets and description have been saved in the publisher dashboard draft; the extension has not been published. The publisher removed the appearance paragraph from the dashboard description, so preserve that edit when updating the listing.
 
 ## Listing fields
 
@@ -62,7 +62,7 @@ Checks require six captured screenshots, six decks, six cards in the open deck, 
 
 ## Before submission
 
-- Resolve the security and data-category questions in [privacy declarations](../store-privacy-declarations.md).
+- Apply the resolved guidance in [privacy declarations](../store-privacy-declarations.md): Web history and Website content checked; other data categories unchecked for the current implementation.
 - The current candidate includes experimental previews, labeled and off by default. If they are removed later, update the description, policy, and permission notes together.
 - Follow the [release guide](../release.md) for the tested ZIP, remaining manual checks, and publisher setup.
 - Compare the final listing and screenshots with the package actually being submitted. These materials do not establish store approval.
